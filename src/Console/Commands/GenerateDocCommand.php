@@ -5,8 +5,8 @@ namespace IsmayilDev\LaravelDocKit\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 use IsmayilDev\LaravelDocKit\Processors\PathDiscoverProcessor;
-use OpenApi\Attributes\Info;
 use OpenApi\Attributes\Server;
+use OpenApi\Attributes\ServerVariable;
 use OpenApi\Generator;
 use OpenApi\Pipeline;
 use OpenApi\Processors\BuildPaths;
@@ -20,38 +20,37 @@ class GenerateDocCommand extends Command
     public function handle()
     {
         $this->info('Generating OpenAPI documentation...');
-        $info = new Info(
-            version: '1.0.0',
-            description: 'Your App documentation',
-            title: 'Your App API'
+
+        $openApi = new Generator;
+        $servers = [new Server(
+            url: 'https://localhost',
+            description: 'Localhost',
+            variables: [
+                new ServerVariable('email', 'Your email', 'me@ismayil.dev'),
+                new ServerVariable('password', 'Your password', 'password'),
+            ]
+        )];
+        $insertMatch = function (array $pipes) {
+            foreach ($pipes as $ii => $pipe) {
+                if ($pipe instanceof BuildPaths) {
+                    return $ii;
+                }
+            }
+
+            return null;
+        };
+
+        $openApi->withProcessor(
+            function (Pipeline $pipeline) use ($insertMatch) {
+                $pipeline->insert(new PathDiscoverProcessor, $insertMatch);
+            }
         );
 
-        $openApi = Generator::scan([app_path()]);
-        $openApi->info = $info;
+        $doc = $openApi->generate([app_path()]);
+        $doc->servers = $servers;
 
-//        $openApi = (new Generator());
-//
-//        $insertMatch = function (array $pipes) {
-//            foreach ($pipes as $ii => $pipe) {
-//                if ($pipe instanceof BuildPaths) {
-//                    return $ii;
-//                }
-//            }
-//
-//            return null;
-//        };
-//
-//        $openApi->withProcessor(
-//            function (Pipeline $pipeline) use ($insertMatch) {
-//                $pipeline->insert(new PathDiscoverProcessor(), $insertMatch);
-//            }
-//        );
-//
-//        $servers = [new Server(url: 'https://localhost', description: 'Localhost')];
-//
-        ;
+        Storage::put('documentation/openapi.yaml', $doc->toYaml());
 
-        Storage::put('documentation/openapi.yaml', $openApi->toYaml());
-
+        $this->info('Documentation generated successfully!');
     }
 }

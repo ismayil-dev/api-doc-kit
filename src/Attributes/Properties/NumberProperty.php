@@ -2,10 +2,9 @@
 
 namespace IsmayilDev\LaravelDocKit\Attributes\Properties;
 
-use OpenApi\Attributes\Property;
-
-use IsmayilDev\LaravelDocKit\Attributes\Enums\OpenApiPropertyType;
 use Attribute;
+use IsmayilDev\LaravelDocKit\Attributes\Enums\OpenApiPropertyType;
+use OpenApi\Attributes\Property;
 
 #[Attribute(Attribute::TARGET_METHOD | Attribute::TARGET_PROPERTY | Attribute::TARGET_PARAMETER | Attribute::TARGET_CLASS_CONSTANT | Attribute::IS_REPEATABLE)]
 class NumberProperty extends Property

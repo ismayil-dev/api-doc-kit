@@ -17,8 +17,7 @@ class StringQueryParameter extends Parameter
         ?string $queryName = null,
         bool $required = false,
         string $example = Generator::UNDEFINED
-    )
-    {
+    ) {
         parent::__construct(
             name: $name,
             description: $description ?? $name,

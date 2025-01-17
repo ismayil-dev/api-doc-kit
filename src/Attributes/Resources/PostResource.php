@@ -22,7 +22,7 @@ class PostResource extends Post
             description: $description,
             summary: $summary,
             responses: [
-                new SuccessResponse(),
+                new SuccessResponse,
             ]
         );
     }

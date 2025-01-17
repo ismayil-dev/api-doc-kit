@@ -2,11 +2,11 @@
 
 namespace IsmayilDev\LaravelDocKit\Attributes\Properties;
 
+use Attribute;
 use Illuminate\Support\Str;
 use IsmayilDev\LaravelDocKit\Attributes\Enums\OpenApiPropertyFormat;
 use IsmayilDev\LaravelDocKit\Attributes\Enums\OpenApiPropertyType;
 use OpenApi\Attributes\Property;
-use Attribute;
 
 #[Attribute(Attribute::TARGET_METHOD | Attribute::TARGET_PROPERTY | Attribute::TARGET_PARAMETER | Attribute::TARGET_CLASS_CONSTANT | Attribute::IS_REPEATABLE)]
 class DateProperty extends Property

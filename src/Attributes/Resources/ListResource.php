@@ -10,11 +10,12 @@ class ListResource extends Get
 {
     public function __construct(
         string $entity,
-        ?string $description = null,
         ?string $requestClass = null,
         ?string $path = null,
-        array $tags = [],
+        ?string $summary = null,
+        ?string $description = null,
         ?string $operationId = null,
+        array $tags = [],
     ) {
         parent::__construct(
             path: $path ?? $entity->value,

@@ -8,6 +8,6 @@ trait ResourceTrait
 {
     public function getEntity(): EntityResolver
     {
-        return EntityResolver::model($this->model);
+        return EntityResolver::fromModel($this->model);
     }
 }

@@ -10,6 +10,7 @@ use OpenApi\Attributes\Post;
 class PostResource extends Post
 {
     public function __construct(
+        public string $model,
         ?string $path = null,
         ?string $summary = null,
         ?string $description = null,

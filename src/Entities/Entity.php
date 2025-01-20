@@ -26,9 +26,10 @@ readonly class Entity
         return Str::plural($this->name());
     }
 
-    public function description(string $prefix): string
+    public function description(string $prefix, bool $isPlural = false): string
     {
         $title = Str::title(Str::snake($this->name(), ' '));
+        $title = $isPlural ? Str::plural($title) : $title;
         $prefix = Str::title(Str::snake(Str::camel($prefix), ' '));
 
         return "$prefix $title";

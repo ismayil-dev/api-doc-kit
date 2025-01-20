@@ -25,7 +25,7 @@ abstract class BaseResourceHandler
     {
         $actionName = $this->guessActionName($route, $entity);
 
-        return $entity->description($actionName);
+        return $entity->description($actionName, $this->usePluralEntity);
     }
 
     protected function guessOperationId(RouteItem $route, Entity $entity): string

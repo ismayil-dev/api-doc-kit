@@ -1,6 +1,5 @@
 <?php
 
-
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Arr;
 use IsmayilDev\LaravelDocKit\Attributes\Enums\OpenApiPropertyType;

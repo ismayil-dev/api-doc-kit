@@ -6,8 +6,5 @@ use OpenApi\Annotations\Operation;
 
 class EndpointHandler
 {
-    public function handle(Operation $annotation)
-    {
-
-    }
+    public function handle(Operation $annotation) {}
 }

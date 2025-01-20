@@ -27,28 +27,29 @@ abstract class BaseResourceHandler
         return $entity->description($actionName);
     }
 
-    protected function guessOperationId(RouteItem $route, Entity $entity): string
+    protected function guessOperationId(RouteItem $route, Entity $entity, $isPluralEntity = false): string
     {
         $actionName = $this->guessActionName($route, $entity);
+        $entityName = $isPluralEntity ? $entity->getPluralName() : $entity->name();
 
-        return Str::camel("{$actionName}{$entity->name()}");
+        return Str::camel("{$actionName}{$entityName}");
     }
 
     protected function guessActionName(RouteItem $route, Entity $model): string
     {
-        if ($route->isSingleAction) {
+        if (! $route->isSingleAction) {
             return $route->functionName;
         }
 
-        $actionName = $route->name;
-        $controllerName = $route->className;
+        $actionName = $this->annotation->_context->class;
+        $controllerName = $actionName;
 
         if (Str::contains($controllerName, 'controller', true)) {
             $actionName = Str::replace(
                 search: 'controller',
                 replace: '',
-                subject:  $controllerName,
-                caseSensitive:  false
+                subject: $controllerName,
+                caseSensitive: false
             );
         }
 
@@ -58,8 +59,8 @@ abstract class BaseResourceHandler
             $actionName = Str::replace(
                 search: $possibleModelNames,
                 replace: '',
-                subject:  $actionName,
-                caseSensitive:  false
+                subject: $actionName,
+                caseSensitive: false
             );
         }
 

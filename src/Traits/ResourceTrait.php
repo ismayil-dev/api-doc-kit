@@ -2,12 +2,20 @@
 
 namespace IsmayilDev\LaravelDocKit\Traits;
 
-use IsmayilDev\LaravelDocKit\Resolvers\EntityResolver;
-
 trait ResourceTrait
 {
-    public function getEntity(): EntityResolver
+    public function getModel(): string
     {
-        return EntityResolver::fromModel($this->model);
+        return $this->model;
+    }
+
+    public function getRequestClass(): ?string
+    {
+        return $this->requestClass;
+    }
+
+    public function getActionName(): ?string
+    {
+        return $this->actionName;
     }
 }

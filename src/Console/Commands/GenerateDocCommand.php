@@ -4,7 +4,7 @@ namespace IsmayilDev\LaravelDocKit\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
-use IsmayilDev\LaravelDocKit\Processors\PathDiscoverProcessor;
+use IsmayilDev\LaravelDocKit\Processors\ResourceDiscoverProcessor;
 use OpenApi\Attributes\Server;
 use OpenApi\Attributes\ServerVariable;
 use OpenApi\Generator;
@@ -42,7 +42,7 @@ class GenerateDocCommand extends Command
 
         $openApi->withProcessor(
             function (Pipeline $pipeline) use ($insertMatch) {
-                $pipeline->insert(new PathDiscoverProcessor, $insertMatch);
+                $pipeline->insert(new ResourceDiscoverProcessor, $insertMatch);
             }
         );
 

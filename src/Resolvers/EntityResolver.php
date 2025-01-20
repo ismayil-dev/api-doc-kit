@@ -8,7 +8,7 @@ use RuntimeException;
 readonly class EntityResolver
 {
     /**
-     * @param string<class-string> $modelClass
+     * @param  string<class-string>  $modelClass
      */
     public static function fromModel(string $modelClass): Entity
     {

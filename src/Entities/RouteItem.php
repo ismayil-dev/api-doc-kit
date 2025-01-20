@@ -12,6 +12,5 @@ class RouteItem
         public string $name,
         public $parameters = [],
         public $isSingleAction = false,
-    ) {
-    }
+    ) {}
 }

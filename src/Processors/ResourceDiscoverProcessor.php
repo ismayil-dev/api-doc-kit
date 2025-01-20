@@ -3,18 +3,21 @@
 namespace IsmayilDev\LaravelDocKit\Processors;
 
 use Illuminate\Support\Collection;
+use IsmayilDev\LaravelDocKit\Attributes\Resources\ListResource;
 use IsmayilDev\LaravelDocKit\Attributes\Resources\PostResource;
 use IsmayilDev\LaravelDocKit\Entities\RouteItem;
+use IsmayilDev\LaravelDocKit\Handlers\ListResourceHandler;
 use IsmayilDev\LaravelDocKit\Handlers\PostResourceHandler;
 use IsmayilDev\LaravelDocKit\Helper\RouteHelper;
 use OpenApi\Analysis;
 use OpenApi\Annotations\Operation;
 
-readonly class PathDiscoverProcessor
+readonly class ResourceDiscoverProcessor
 {
     private RouteHelper $routeHelper;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->routeHelper = new RouteHelper;
         $this->routeHelper->prepareRoutes();
     }
@@ -29,8 +32,7 @@ readonly class PathDiscoverProcessor
 
             $handler = match (get_class($annotation)) {
                 PostResource::class => new PostResourceHandler($annotation),
-                PutResource::class => new PutResourceHandler($annotation),
-                GetResource::class => new GetResourceHandler($annotation),
+                ListResource::class => new ListResourceHandler($annotation),
                 default => null,
             };
 

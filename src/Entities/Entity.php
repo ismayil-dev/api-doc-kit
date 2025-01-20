@@ -9,8 +9,7 @@ readonly class Entity
 {
     public function __construct(
         protected string $entity
-    ) {
-    }
+    ) {}
 
     public function operationId(string $prefix): string
     {
@@ -20,6 +19,11 @@ readonly class Entity
     public function name(): string
     {
         return $this->getEntity();
+    }
+
+    public function getPluralName(): string
+    {
+        return Str::plural($this->name());
     }
 
     public function description(string $prefix): string

@@ -12,8 +12,13 @@ class PostResourceHandler extends BaseResourceHandler
         $controllerWithNamespace = $this->getClassWithNameSpace();
         $route = $this->routeHelper->findByController($controllerWithNamespace);
 
+        // @TODO check controller has a attribute
+        if ($route === null) {
+            return;
+        }
+
         $this->annotation->path = "/{$route?->path}";
-        $entity = EntityResolver::fromModel($this->annotation->model);
+        $entity = EntityResolver::fromModel($this->annotation->getModel());
 
         if ($this->annotation->description === Generator::UNDEFINED) {
             $this->annotation->description = $this->guessDescription(

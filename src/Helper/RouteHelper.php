@@ -2,21 +2,21 @@
 
 namespace IsmayilDev\LaravelDocKit\Helper;
 
+use Illuminate\Routing\Route as RouteItem;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Routing\Route as RouteItem;
 use IsmayilDev\LaravelDocKit\Entities\RouteItem as RouteItemEntity;
 
 readonly class RouteHelper
 {
-    /** @var Collection<RouteItem> $routes */
+    /** @var Collection<RouteItem> */
     public Collection $routes;
 
     public function prepareRoutes(): void
     {
         $this->routes = collect(Route::getRoutes())
             ->filter(function ($route) {
-                //@TODO add support for custom namespaces
+                // @TODO add support for custom namespaces
                 return str_starts_with($route->getActionName(), 'App\\');
             })
             ->mapWithKeys(function (RouteItem $route) {

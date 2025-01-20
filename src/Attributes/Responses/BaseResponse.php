@@ -2,12 +2,12 @@
 
 namespace IsmayilDev\LaravelDocKit\Attributes\Responses;
 
+use Attribute;
 use IsmayilDev\LaravelDocKit\Attributes\Enums\OpenApiPropertyType;
 use OpenApi\Attributes\Items;
 use OpenApi\Attributes\JsonContent;
 use OpenApi\Attributes\Property;
 use OpenApi\Attributes\Response;
-use Attribute;
 
 #[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
 class BaseResponse extends Response

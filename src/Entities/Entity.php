@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace IsmayilDev\LaravelDocKit\Entities;
 
@@ -11,10 +11,10 @@ readonly class Entity
         protected string $entity
     ) {}
 
-    public function operationId(string $prefix): string
-    {
-        return Str::camel("$prefix {$this->name()}");
-    }
+//    public function operationId(string $prefix): string
+//    {
+//        return Str::camel("$prefix {$this->name()}");
+//    }
 
     public function name(): string
     {
@@ -35,10 +35,10 @@ readonly class Entity
         return "$prefix $title";
     }
 
-    public function summary(string $summary): string
-    {
-        return Str::title(Str::snake(Str::camel($summary), ' '));
-    }
+//    public function summary(string $summary): string
+//    {
+//        return Str::title(Str::snake(Str::camel($summary), ' '));
+//    }
 
     public function tags(array $additional = []): array
     {

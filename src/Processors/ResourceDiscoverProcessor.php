@@ -19,7 +19,6 @@ readonly class ResourceDiscoverProcessor
     public function __construct()
     {
         $this->routeHelper = new RouteHelper;
-        $this->routeHelper->prepareRoutes();
     }
 
     public function __invoke(Analysis $analysis): void

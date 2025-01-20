@@ -7,6 +7,8 @@ use OpenApi\Generator;
 
 class ListResourceHandler extends BaseResourceHandler
 {
+    protected bool $usePluralEntity = true;
+
     public function process(): void
     {
         $controllerWithNamespace = $this->getClassWithNameSpace();
@@ -17,11 +19,17 @@ class ListResourceHandler extends BaseResourceHandler
 
         $entity = EntityResolver::fromModel($this->annotation->getModel());
 
+        if ($this->annotation->description === Generator::UNDEFINED) {
+            $this->annotation->description = $this->guessDescription(
+                $route,
+                $entity
+            );
+        }
+
         if ($this->annotation->operationId === Generator::UNDEFINED || empty($this->annotation->operationId)) {
             $this->annotation->operationId = $this->guessOperationId(
                 route: $route,
                 entity: $entity,
-                isPluralEntity: true
             );
         }
 

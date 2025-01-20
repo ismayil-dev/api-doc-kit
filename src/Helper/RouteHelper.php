@@ -7,10 +7,15 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
 use IsmayilDev\LaravelDocKit\Entities\RouteItem as RouteItemEntity;
 
-readonly class RouteHelper
+class RouteHelper
 {
     /** @var Collection<RouteItem> */
     public Collection $routes;
+
+    public function __construct()
+    {
+        $this->prepareRoutes();
+    }
 
     public function prepareRoutes(): void
     {

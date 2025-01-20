@@ -12,10 +12,11 @@ abstract class BaseResourceHandler
 {
     protected RouteHelper $routeHelper;
 
+    protected bool $usePluralEntity = false;
+
     public function __construct(protected Operation $annotation)
     {
         $this->routeHelper = new RouteHelper;
-        $this->routeHelper->prepareRoutes();
     }
 
     abstract public function process(): void;
@@ -27,10 +28,10 @@ abstract class BaseResourceHandler
         return $entity->description($actionName);
     }
 
-    protected function guessOperationId(RouteItem $route, Entity $entity, $isPluralEntity = false): string
+    protected function guessOperationId(RouteItem $route, Entity $entity): string
     {
         $actionName = $this->guessActionName($route, $entity);
-        $entityName = $isPluralEntity ? $entity->getPluralName() : $entity->name();
+        $entityName = $this->usePluralEntity ? $entity->getPluralName() : $entity->name();
 
         return Str::camel("{$actionName}{$entityName}");
     }

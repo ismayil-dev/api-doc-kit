@@ -1,13 +1,15 @@
 <?php
 
-namespace IsmayilDev\LaravelDocKit\Attributes\Parameters;
+namespace IsmayilDev\ApiDocKit\Attributes\Parameters\Query;
 
-use IsmayilDev\LaravelDocKit\Attributes\Enums\OpenApiPropertyType;
+use Attribute;
+use IsmayilDev\ApiDocKit\Attributes\Enums\OpenApiPropertyType;
 use OpenApi\Attributes\Parameter;
 use OpenApi\Attributes\Schema;
 use OpenApi\Generator;
 
-class IntQueryParameter extends Parameter
+#[Attribute(Attribute::TARGET_METHOD | Attribute::TARGET_PROPERTY | Attribute::TARGET_PARAMETER | Attribute::TARGET_CLASS_CONSTANT | Attribute::IS_REPEATABLE)]
+class StringQueryParameter extends Parameter
 {
     public function __construct(
         string $name,
@@ -21,7 +23,7 @@ class IntQueryParameter extends Parameter
             description: $description ?? $name,
             in: $queryName,
             required: $required,
-            schema: new Schema(type: OpenApiPropertyType::INTEGER->value),
+            schema: new Schema(type: OpenApiPropertyType::STRING->value),
             example: $example,
         );
     }

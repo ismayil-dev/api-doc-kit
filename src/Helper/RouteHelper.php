@@ -1,11 +1,11 @@
 <?php
 
-namespace IsmayilDev\LaravelDocKit\Helper;
+namespace IsmayilDev\ApiDocKit\Helper;
 
 use Illuminate\Routing\Route as RouteItem;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
-use IsmayilDev\LaravelDocKit\Entities\RouteItem as RouteItemEntity;
+use IsmayilDev\ApiDocKit\Entities\RouteItem as RouteItemEntity;
 
 class RouteHelper
 {

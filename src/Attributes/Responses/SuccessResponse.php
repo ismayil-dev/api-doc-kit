@@ -1,6 +1,6 @@
 <?php
 
-namespace IsmayilDev\LaravelDocKit\Attributes\Responses;
+namespace IsmayilDev\ApiDocKit\Attributes\Responses;
 
 use Attribute;
 use OpenApi\Attributes\Response;

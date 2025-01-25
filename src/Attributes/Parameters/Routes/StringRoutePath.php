@@ -1,27 +1,27 @@
 <?php
 
-namespace IsmayilDev\LaravelDocKit\Attributes\Parameters;
+declare(strict_types=1);
+
+namespace IsmayilDev\ApiDocKit\Attributes\Parameters\Routes;
 
 use Attribute;
-use IsmayilDev\LaravelDocKit\Attributes\Enums\OpenApiPropertyType;
+use IsmayilDev\ApiDocKit\Attributes\Enums\OpenApiPropertyType;
 use OpenApi\Attributes\Parameter;
 use OpenApi\Attributes\Schema;
-use OpenApi\Generator;
 
 #[Attribute(Attribute::TARGET_METHOD | Attribute::TARGET_PROPERTY | Attribute::TARGET_PARAMETER | Attribute::TARGET_CLASS_CONSTANT | Attribute::IS_REPEATABLE)]
-class StringQueryParameter extends Parameter
+class StringRoutePath extends Parameter
 {
     public function __construct(
         string $name,
         ?string $description = null,
-        ?string $queryName = null,
-        bool $required = false,
-        string $example = Generator::UNDEFINED
+        bool $required = true,
+        ?string $example = null
     ) {
         parent::__construct(
             name: $name,
-            description: $description ?? $name,
-            in: $queryName,
+            description: $description,
+            in: 'path',
             required: $required,
             schema: new Schema(type: OpenApiPropertyType::STRING->value),
             example: $example,

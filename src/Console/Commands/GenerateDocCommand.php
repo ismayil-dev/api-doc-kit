@@ -1,10 +1,10 @@
 <?php
 
-namespace IsmayilDev\LaravelDocKit\Console\Commands;
+namespace IsmayilDev\ApiDocKit\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
-use IsmayilDev\LaravelDocKit\Processors\ResourceDiscoverProcessor;
+use IsmayilDev\ApiDocKit\Processors\ApiResourceProcessor;
 use OpenApi\Attributes\Server;
 use OpenApi\Attributes\ServerVariable;
 use OpenApi\Generator;
@@ -42,7 +42,7 @@ class GenerateDocCommand extends Command
 
         $openApi->withProcessor(
             function (Pipeline $pipeline) use ($insertMatch) {
-                $pipeline->insert(new ResourceDiscoverProcessor, $insertMatch);
+                $pipeline->insert(app(ApiResourceProcessor::class), $insertMatch);
             }
         );
 

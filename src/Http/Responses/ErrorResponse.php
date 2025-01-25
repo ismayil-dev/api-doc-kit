@@ -2,8 +2,8 @@
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Arr;
-use IsmayilDev\LaravelDocKit\Attributes\Enums\OpenApiPropertyType;
-use IsmayilDev\LaravelDocKit\Attributes\Properties\NumberProperty;
+use IsmayilDev\ApiDocKit\Attributes\Enums\OpenApiPropertyType;
+use IsmayilDev\ApiDocKit\Attributes\Properties\NumberProperty;
 use OpenApi\Attributes\Items;
 use OpenApi\Attributes\Property;
 use OpenApi\Attributes\Schema;

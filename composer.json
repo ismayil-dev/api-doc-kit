@@ -1,5 +1,5 @@
 {
-    "name": "ismayil-dev/laravel-doc-kit",
+    "name": "ismayil-dev/api-doc-kit",
     "description": "A Laravel package for generating OpenAPI documentation and TypeScript SDK.",
     "type": "library",
     "authors": [
@@ -16,12 +16,12 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "IsmayilDev\\LaravelDocKit\\": "src/"
+            "IsmayilDev\\ApiDocKit\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "IsmayilDev\\LaravelDocKit\\Tests\\": "tests/"
+            "IsmayilDev\\ApiDocKit\\Tests\\": "tests/"
         }
     },
     "scripts": {

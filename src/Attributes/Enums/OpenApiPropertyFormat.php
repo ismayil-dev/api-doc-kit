@@ -1,6 +1,6 @@
 <?php
 
-namespace IsmayilDev\LaravelDocKit\Attributes\Enums;
+namespace IsmayilDev\ApiDocKit\Attributes\Enums;
 
 use OpenApi\Attributes\Schema;
 

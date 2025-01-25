@@ -1,20 +1,17 @@
-<?php declare(strict_types = 1);
+<?php
 
-namespace IsmayilDev\LaravelDocKit\Entities;
+declare(strict_types=1);
+
+namespace IsmayilDev\ApiDocKit\Entities;
 
 use Illuminate\Support\Str;
-use IsmayilDev\LaravelDocKit\Generators\ModelExampleIdGenerator;
+use IsmayilDev\ApiDocKit\Generators\ModelExampleIdGenerator;
 
 readonly class Entity
 {
     public function __construct(
         protected string $entity
     ) {}
-
-//    public function operationId(string $prefix): string
-//    {
-//        return Str::camel("$prefix {$this->name()}");
-//    }
 
     public function name(): string
     {
@@ -35,10 +32,17 @@ readonly class Entity
         return "$prefix $title";
     }
 
-//    public function summary(string $summary): string
-//    {
-//        return Str::title(Str::snake(Str::camel($summary), ' '));
-//    }
+    public function parameterDescription(string $parameterName)
+    {
+        $title = Str::title(Str::snake($this->name(), ' '));
+
+        return "{$title} {$parameterName}";
+    }
+
+    public function relationParameterDescription(string $parameterName, Entity $relatedEntity): string
+    {
+        return "The {$relatedEntity->name()} ID associated with {$this->name()}";
+    }
 
     public function tags(array $additional = []): array
     {
@@ -47,9 +51,17 @@ readonly class Entity
 
     public function exampleId(): string
     {
-        $instance = new $this->entity;
+        return (string) ModelExampleIdGenerator::model($this->instance())->generate();
+    }
 
-        return (string) ModelExampleIdGenerator::model($instance)->generate();
+    public function keyType()
+    {
+        return $this->instance()->getKeyType();
+    }
+
+    private function instance()
+    {
+        return new $this->entity;
     }
 
     private function getEntity(): string

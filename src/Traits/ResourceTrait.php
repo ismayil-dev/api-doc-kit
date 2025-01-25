@@ -1,6 +1,6 @@
 <?php
 
-namespace IsmayilDev\LaravelDocKit\Traits;
+namespace IsmayilDev\ApiDocKit\Traits;
 
 trait ResourceTrait
 {

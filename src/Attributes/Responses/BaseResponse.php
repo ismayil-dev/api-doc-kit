@@ -1,9 +1,9 @@
 <?php
 
-namespace IsmayilDev\LaravelDocKit\Attributes\Responses;
+namespace IsmayilDev\ApiDocKit\Attributes\Responses;
 
 use Attribute;
-use IsmayilDev\LaravelDocKit\Attributes\Enums\OpenApiPropertyType;
+use IsmayilDev\ApiDocKit\Attributes\Enums\OpenApiPropertyType;
 use OpenApi\Attributes\Items;
 use OpenApi\Attributes\JsonContent;
 use OpenApi\Attributes\Property;

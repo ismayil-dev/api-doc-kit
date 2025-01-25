@@ -1,6 +1,6 @@
 <?php
 
-namespace IsmayilDev\LaravelDocKit\Helper;
+namespace IsmayilDev\ApiDocKit\Helper;
 
 use ReflectionClass;
 use ReflectionException;
@@ -12,7 +12,7 @@ class ArchitectureHelper
      *
      * @throws ReflectionException
      */
-    public static function classUsesTrait(string $objectClass, string $traitClass): bool
+    public function classUsesTrait(string $objectClass, string $traitClass): bool
     {
         $objectReflection = new ReflectionClass($objectClass);
 

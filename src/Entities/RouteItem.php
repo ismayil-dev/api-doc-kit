@@ -1,6 +1,6 @@
 <?php
 
-namespace IsmayilDev\LaravelDocKit\Entities;
+namespace IsmayilDev\ApiDocKit\Entities;
 
 class RouteItem
 {

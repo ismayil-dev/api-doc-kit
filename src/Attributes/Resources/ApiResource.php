@@ -14,9 +14,10 @@ class ApiResource extends Operation
     use ResourceTrait;
 
     public function __construct(
-        private readonly string $model,
+        private readonly string $entity,
         private readonly ?string $requestClass = null,
         private readonly ?string $actionName = null,
+        private readonly bool $isList = false,
         ?string $path = null,
         ?string $summary = null,
         ?string $description = null,

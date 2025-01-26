@@ -5,43 +5,66 @@ declare(strict_types=1);
 namespace IsmayilDev\ApiDocKit\Routes;
 
 use Illuminate\Support\Collection;
+use IsmayilDev\ApiDocKit\Attributes\Enums\OpenApiPropertyType;
+use IsmayilDev\ApiDocKit\Attributes\Parameters\Routes\RoutePathIntegerParameter;
+use IsmayilDev\ApiDocKit\Attributes\Parameters\Routes\RoutePathStringParameter;
+use IsmayilDev\ApiDocKit\Attributes\Resources\ApiResource;
 use IsmayilDev\ApiDocKit\Entities\Entity;
 use IsmayilDev\ApiDocKit\Entities\RouteItem;
-use OpenApi\Attributes\Get;
+use IsmayilDev\ApiDocKit\Entities\RoutePathParameter;
+use ReflectionAttribute;
 use ReflectionClass;
 
 class RoutePathParameterBuilder
 {
-    public Collection $parameters;
+    public function __construct(private RoutePathParameterResolver $pathResolver) {}
 
-    public function __construct(RoutePathParameterResolver $pathResolver)
+    public function build(RouteItem $route, Entity $entity): Collection
     {
-        $this->parameters = collect();
-    }
+        $parameters = collect();
 
-    public function build(RouteItem $route, Entity $entity): self
-    {
         $reflection = new ReflectionClass($route->className);
         $method = $reflection->getMethod($route->functionName);
-        $resourceAttributes = collect($method->getAttributes());
-        $attribute = $method->getAttributes()[0];
-        dd($attribute);
+        $resourceAttributes = collect($method->getAttributes())
+            ->filter(function (ReflectionAttribute $attribute) {
+                return $attribute->getName() === ApiResource::class;
+            });
 
-        //        dd(is_subclass_of($resourceAttributes->first()->getName(), Get::class));
+        /** @var ReflectionAttribute $attribute */
+        foreach ($resourceAttributes as $attribute) {
+            $arguments = $attribute->getArguments();
+            if (array_key_exists('parameters', $arguments)) {
+                $parameters->push(...$arguments['parameters']);
+            }
+        }
 
-        //        $resourceArguments = $resourceAttribute->getArguments();
-        //
-        //        if (array_key_exists('parameters', $resourceArguments)) {
-        //            dd($resourceArguments['parameters'][0]);
-        //        }
+        $routePathParameters = array_filter($route->parameters, function ($pathParameter) use ($parameters) {
+            return is_null($parameters->firstWhere('name', $pathParameter['name']));
+        });
 
-        return $this;
+        if (! empty($routePathParameters)) {
+            $routeParameters = $this->pathResolver->resolve($routePathParameters, $entity)->get();
+            $mappedParameters = $this->mapToOpenApiAttribute($routeParameters);
+            $parameters->push(...$mappedParameters);
+        }
+
+        return $parameters;
     }
 
-    public function buildCoreParameter(object $pathReflectionObject)
+    private function mapToOpenApiAttribute(Collection $routeParameters): Collection
     {
-        //        return match (get_class($pathReflectionObject)) {
-        //
-        //        };
+        return $routeParameters->map(function (RoutePathParameter $parameter) {
+            $propertyClass = match ($parameter->type) {
+                OpenApiPropertyType::INTEGER => RoutePathIntegerParameter::class,
+                default => RoutePathStringParameter::class,
+            };
+
+            return new $propertyClass(
+                name: $parameter->name,
+                description: $parameter->description,
+                required: ! $parameter->optional,
+                example: $parameter->example,
+            );
+        });
     }
 }

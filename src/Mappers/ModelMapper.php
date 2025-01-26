@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace IsmayilDev\ApiDocKit\Helper;
+namespace IsmayilDev\ApiDocKit\Mappers;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\File;
 use IsmayilDev\ApiDocKit\Entities\Entity;
 
-class ModelHelper
+class ModelMapper
 {
     public array $models = [];
 

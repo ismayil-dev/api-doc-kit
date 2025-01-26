@@ -49,9 +49,9 @@ readonly class Entity
         return array_merge([Str::plural(Str::headline($this->name()))], $additional);
     }
 
-    public function exampleId(): string
+    public function exampleId(): string|int
     {
-        return (string) ModelExampleIdGenerator::model($this->instance())->generate();
+        return ModelExampleIdGenerator::model($this->instance())->generate();
     }
 
     public function keyType()

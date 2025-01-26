@@ -7,11 +7,13 @@ use IsmayilDev\ApiDocKit\Attributes\Resources\ApiResource;
 use IsmayilDev\ApiDocKit\Attributes\Responses\SuccessResponse;
 use IsmayilDev\ApiDocKit\Entities\Entity;
 use IsmayilDev\ApiDocKit\Entities\RouteItem;
-use IsmayilDev\ApiDocKit\Helper\RouteHelper;
+use IsmayilDev\ApiDocKit\Mappers\RouteMapper;
 use IsmayilDev\ApiDocKit\Resolvers\EntityResolver;
+use IsmayilDev\ApiDocKit\Routes\RoutePathParameterBuilder;
 use OpenApi\Analysis;
 use OpenApi\Annotations\Operation;
 use OpenApi\Attributes\Get;
+use OpenApi\Attributes\Patch;
 use OpenApi\Attributes\Post;
 use OpenApi\Generator;
 
@@ -20,33 +22,38 @@ class ApiResourceProcessor
     protected bool $usePluralEntity = false;
 
     public function __construct(
-        private readonly RouteHelper $routeHelper,
+        private readonly RouteMapper $routeMapper,
         private readonly EntityResolver $entityResolver,
+        private readonly RoutePathParameterBuilder $routeParameterBuilder,
     ) {}
 
     public function __invoke(Analysis $analysis): void
     {
         $annotations = $analysis->annotations;
+        $annotationsToDetach = [];
+        $annotationsToAttach = [];
 
         /** @var Operation $annotation */
         foreach ($annotations as $annotation) {
-
             if (! $annotation instanceof ApiResource) {
-                return;
+                continue;
             }
 
             $controllerWithNamespace = $this->getClassWithNameSpace($annotation);
-            $route = $this->routeHelper->findByController($controllerWithNamespace);
+            $route = $this->routeMapper->findByController($controllerWithNamespace, $annotation->_context->method);
+
             // @TODO check controller has a attribute
             if ($route === null) {
-                return;
+                $annotationsToDetach[] = $annotation;
+
+                continue;
             }
 
             $path = "/{$route->path}";
             $description = null;
             $operationId = null;
-            //            $annotation->path = "/{$route?->path}";
-            $entity = $this->entityResolver->resolve($annotation->getModel());
+            $entity = $this->entityResolver->resolve($annotation->getEntity());
+            $this->usePluralEntity = $annotation->isList();
 
             if ($annotation->description === Generator::UNDEFINED) {
                 $description = $this->guessDescription($annotation, $route, $entity);
@@ -61,10 +68,9 @@ class ApiResourceProcessor
             $resourceClass = match ($route->method) {
                 'POST' => Post::class,
                 'GET' => Get::class,
+                'PATCH' => Patch::class,
                 default => throw new \RuntimeException("Unsupported method {$route->method}"),
             };
-
-            $annotations->detach($annotation);
 
             $newAnnotation = new $resourceClass(
                 path: $path,
@@ -76,7 +82,22 @@ class ApiResourceProcessor
                 ]
             );
 
-            $annotations->attach($newAnnotation);
+            if (! empty($route->parameters)) {
+                $newAnnotation->parameters = $this->routeParameterBuilder
+                    ->build($route, $entity)
+                    ->toArray();
+            }
+
+            $annotationsToAttach[] = $newAnnotation;
+            $annotationsToDetach[] = $annotation;
+        }
+
+        foreach ($annotationsToDetach as $itemToDetach) {
+            $annotations->detach($itemToDetach);
+        }
+
+        foreach ($annotationsToAttach as $annotation) {
+            $annotations->attach($annotation);
         }
     }
 

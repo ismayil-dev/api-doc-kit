@@ -4,9 +4,9 @@ namespace IsmayilDev\ApiDocKit\Traits;
 
 trait ResourceTrait
 {
-    public function getModel(): string
+    public function getEntity(): string
     {
-        return $this->model;
+        return $this->entity;
     }
 
     public function getRequestClass(): ?string
@@ -17,5 +17,10 @@ trait ResourceTrait
     public function getActionName(): ?string
     {
         return $this->actionName;
+    }
+
+    public function isList(): bool
+    {
+        return $this->isList;
     }
 }

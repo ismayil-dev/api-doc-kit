@@ -9,8 +9,10 @@ use IsmayilDev\ApiDocKit\Attributes\Enums\OpenApiPropertyType;
 class RoutePathParameter
 {
     public function __construct(
+        public string $name,
         public OpenApiPropertyType $type,
         public string $description,
-        public ?string $example,
+        public string|int|null $example,
+        public bool $optional = false,
     ) {}
 }

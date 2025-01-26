@@ -6,7 +6,7 @@ namespace IsmayilDev\ApiDocKit\Mappers;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\File;
-use IsmayilDev\ApiDocKit\Entities\Entity;
+use IsmayilDev\ApiDocKit\Entities\DocEntity;
 
 class ModelMapper
 {
@@ -30,7 +30,7 @@ class ModelMapper
 
                 // TODO: Add support to check multiple classes and class_parents
                 if (is_subclass_of($fileWithNameSpace, Model::class)) {
-                    $entity = new Entity($fileWithNameSpace);
+                    $entity = new DocEntity($fileWithNameSpace);
                     $key = strtolower($entity->name());
                     $this->models[$key] = $entity;
                 }

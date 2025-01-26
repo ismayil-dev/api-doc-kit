@@ -7,7 +7,7 @@ namespace IsmayilDev\ApiDocKit\Entities;
 use Illuminate\Support\Str;
 use IsmayilDev\ApiDocKit\Generators\ModelExampleIdGenerator;
 
-readonly class Entity
+readonly class DocEntity
 {
     public function __construct(
         protected string $entity
@@ -39,7 +39,7 @@ readonly class Entity
         return "{$title} {$parameterName}";
     }
 
-    public function relationParameterDescription(string $parameterName, Entity $relatedEntity): string
+    public function relationParameterDescription(string $parameterName, DocEntity $relatedEntity): string
     {
         return "The {$relatedEntity->name()} ID associated with {$this->name()}";
     }

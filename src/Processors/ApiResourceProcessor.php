@@ -5,7 +5,7 @@ namespace IsmayilDev\ApiDocKit\Processors;
 use Illuminate\Support\Str;
 use IsmayilDev\ApiDocKit\Attributes\Resources\ApiResource;
 use IsmayilDev\ApiDocKit\Attributes\Responses\SuccessResponse;
-use IsmayilDev\ApiDocKit\Entities\Entity;
+use IsmayilDev\ApiDocKit\Entities\DocEntity;
 use IsmayilDev\ApiDocKit\Entities\RouteItem;
 use IsmayilDev\ApiDocKit\Mappers\RouteMapper;
 use IsmayilDev\ApiDocKit\Resolvers\EntityResolver;
@@ -104,7 +104,7 @@ class ApiResourceProcessor
     protected function guessOperationId(
         Operation $annotation,
         RouteItem $route,
-        Entity $entity
+        DocEntity $entity
     ): string {
         $actionName = $this->guessActionName($annotation, $route, $entity);
         $entityName = $this->usePluralEntity ? $entity->getPluralName() : $entity->name();
@@ -112,7 +112,7 @@ class ApiResourceProcessor
         return Str::camel("{$actionName}{$entityName}");
     }
 
-    protected function guessActionName(Operation $annotation, RouteItem $route, Entity $model): string
+    protected function guessActionName(Operation $annotation, RouteItem $route, DocEntity $model): string
     {
         if (! $route->isSingleAction) {
             return $route->functionName;
@@ -144,7 +144,7 @@ class ApiResourceProcessor
         return $actionName;
     }
 
-    protected function guessDescription(Operation $annotation, RouteItem $route, Entity $entity): ?string
+    protected function guessDescription(Operation $annotation, RouteItem $route, DocEntity $entity): ?string
     {
         $actionName = $this->guessActionName($annotation, $route, $entity);
 

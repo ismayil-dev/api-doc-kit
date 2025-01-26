@@ -2,7 +2,7 @@
 
 namespace IsmayilDev\ApiDocKit\Resolvers;
 
-use IsmayilDev\ApiDocKit\Entities\Entity;
+use IsmayilDev\ApiDocKit\Entities\DocEntity;
 use RuntimeException;
 
 readonly class EntityResolver
@@ -14,25 +14,25 @@ readonly class EntityResolver
      *
      * @deprecated Please use resolve method after inject EntityResolver
      */
-    public static function fromModel(string $modelClass): Entity
+    public static function fromModel(string $modelClass): DocEntity
     {
         if (! class_exists($modelClass)) {
             throw new RuntimeException("Model {$modelClass} not found");
         }
 
-        return new Entity($modelClass);
+        return new DocEntity($modelClass);
     }
 
     /**
      * @param  string<class-string>  $modelClass
      */
-    public function resolve(string $modelClass): Entity
+    public function resolve(string $modelClass): DocEntity
     {
         // @TODO Remove this condition when we have a better way to handle with static strings in attributes
         if (! class_exists($modelClass)) {
             throw new RuntimeException("Model {$modelClass} not found");
         }
 
-        return new Entity($modelClass);
+        return new DocEntity($modelClass);
     }
 }

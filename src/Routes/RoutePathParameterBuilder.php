@@ -9,7 +9,7 @@ use IsmayilDev\ApiDocKit\Attributes\Enums\OpenApiPropertyType;
 use IsmayilDev\ApiDocKit\Attributes\Parameters\Routes\RoutePathIntegerParameter;
 use IsmayilDev\ApiDocKit\Attributes\Parameters\Routes\RoutePathStringParameter;
 use IsmayilDev\ApiDocKit\Attributes\Resources\ApiResource;
-use IsmayilDev\ApiDocKit\Entities\Entity;
+use IsmayilDev\ApiDocKit\Entities\DocEntity;
 use IsmayilDev\ApiDocKit\Entities\RouteItem;
 use IsmayilDev\ApiDocKit\Entities\RoutePathParameter;
 use ReflectionAttribute;
@@ -19,7 +19,7 @@ class RoutePathParameterBuilder
 {
     public function __construct(private RoutePathParameterResolver $pathResolver) {}
 
-    public function build(RouteItem $route, Entity $entity): Collection
+    public function build(RouteItem $route, DocEntity $entity): Collection
     {
         $parameters = collect();
 

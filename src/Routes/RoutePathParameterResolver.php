@@ -7,7 +7,7 @@ namespace IsmayilDev\ApiDocKit\Routes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use IsmayilDev\ApiDocKit\Attributes\Enums\OpenApiPropertyType;
-use IsmayilDev\ApiDocKit\Entities\Entity;
+use IsmayilDev\ApiDocKit\Entities\DocEntity;
 use IsmayilDev\ApiDocKit\Entities\RoutePathParameter;
 use IsmayilDev\ApiDocKit\Mappers\ModelMapper;
 
@@ -31,7 +31,7 @@ readonly class RoutePathParameterResolver
     /**
      * @param  array<int, array{name: string, optional: bool}>  $parameters
      */
-    public function resolve(array $parameters, Entity $entity): self
+    public function resolve(array $parameters, DocEntity $entity): self
     {
         foreach ($parameters as $parameter) {
             $parameter['name'] = strtolower($parameter['name']);
@@ -57,7 +57,7 @@ readonly class RoutePathParameterResolver
         return $this;
     }
 
-    private function resolveFromEntity(array $parameter, Entity $entity): ?RoutePathParameter
+    private function resolveFromEntity(array $parameter, DocEntity $entity): ?RoutePathParameter
     {
         $parameterName = $parameter['name'];
         $entityKey = strtolower($entity->name());
@@ -77,7 +77,7 @@ readonly class RoutePathParameterResolver
         return null;
     }
 
-    private function resolveFromRelativeEntity(array $parameter, Entity $entity): ?RoutePathParameter
+    private function resolveFromRelativeEntity(array $parameter, DocEntity $entity): ?RoutePathParameter
     {
         $parameterName = $parameter['name'];
         $relatedModelKey = $parameterName;

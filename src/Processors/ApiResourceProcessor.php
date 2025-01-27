@@ -36,8 +36,6 @@ class ApiResourceProcessor
         /** @var Operation $annotation */
         foreach ($annotations as $annotation) {
             if (! $annotation instanceof ApiResource) {
-                $annotationsToDetach[] = $annotation;
-
                 continue;
             }
 

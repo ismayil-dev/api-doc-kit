@@ -36,6 +36,8 @@ class ApiResourceProcessor
         /** @var Operation $annotation */
         foreach ($annotations as $annotation) {
             if (! $annotation instanceof ApiResource) {
+                $annotationsToDetach[] = $annotation;
+
                 continue;
             }
 
@@ -72,13 +74,21 @@ class ApiResourceProcessor
                 default => throw new \RuntimeException("Unsupported method {$route->method}"),
             };
 
+            // temporary hacky way to test response works or not
+            // @TODO make this automatic
+            if ($controllerWithNamespace === 'App\Http\Controllers\Orders\OrderRetrieveController') {
+                $responseRef = '#/components/schemas/OrderResource';
+            } else {
+                $responseRef = null;
+            }
+
             $newAnnotation = new $resourceClass(
                 path: $path,
                 operationId: $operationId,
                 description: $description,
                 tags: $tags,
                 responses: [
-                    new SuccessResponse,
+                    new SuccessResponse(ref: $responseRef),
                 ]
             );
 

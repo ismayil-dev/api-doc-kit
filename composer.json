@@ -31,7 +31,8 @@
     "prefer-stable": true,
     "require-dev": {
         "pestphp/pest": "^3.7",
-        "laravel/pint": "^1.20"
+        "laravel/pint": "^1.20",
+        "nikic/php-parser": "^5.4"
     },
     "config": {
         "allow-plugins": {

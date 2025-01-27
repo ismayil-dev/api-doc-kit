@@ -6,11 +6,17 @@ namespace IsmayilDev\ApiDocKit\Mappers;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 use IsmayilDev\ApiDocKit\Entities\DocEntity;
 
 class ModelMapper
 {
+    /**
+     * @deprecated Use $newModels instead
+     */
     public array $models = [];
+
+    public array $newModels = [];
 
     public function __construct()
     {
@@ -31,11 +37,22 @@ class ModelMapper
                 // TODO: Add support to check multiple classes and class_parents
                 if (is_subclass_of($fileWithNameSpace, Model::class)) {
                     $entity = new DocEntity($fileWithNameSpace);
+                    $instance = new $fileWithNameSpace;
                     $key = strtolower($entity->name());
-                    $this->models[$key] = $entity;
+
+                    $this->newModels[$fileWithNameSpace] = [
+                        'entity' => $entity,
+                        'keys' => [$key],
+                        'schema' => $this->getSchema($instance),
+                    ];
                 }
             }
         }
+    }
+
+    protected function getSchema(Model $model): array
+    {
+        return Schema::getColumns($model->getTable());
     }
 
     protected function scanForModelFolders(): array

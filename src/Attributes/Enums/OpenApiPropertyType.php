@@ -17,4 +17,16 @@ enum OpenApiPropertyType: string
     case OBJECT = 'object';
     case FILE = 'file';
     case UNDEFINED = 'undefined';
+
+    public static function mapFromDatabaseType(string $databaseType): self
+    {
+        return match ($databaseType) {
+            'string', 'varchar' => self::STRING,
+            'integer', 'int', 'bigint' => self::INTEGER,
+            'timestamp' => self::DATETIME,
+            'tinyint' => self::BOOLEAN,
+            'enum' => self::STRING, // TODO: Add support for enums
+            default => self::UNDEFINED,
+        };
+    }
 }

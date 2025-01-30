@@ -84,26 +84,13 @@ class ApiResourceProcessor
                 $responseRef = null;
             }
 
-            // @TODO Make this automatic, for testing purposes it is written like this
-            if ($controllerWithNamespace === 'App\Http\Controllers\Orders\OrderCreateController') {
-                $reflectedClass = new ReflectionClass($controllerWithNamespace);
-                $method = $reflectedClass->getMethod($route->functionName);
-                $parameters = $method->getParameters();
-                $findRequestClass = array_filter($parameters, function ($parameter) {
-                    return is_subclass_of(strtolower($parameter->getType()->getName()), Request::class);
-                });
-
-                if (! empty($findRequestClass)) {
-                    $requestClass = head($findRequestClass)->getType()->getName();
-                    $requestBody = $this->requestBodyBuilder->requestClass($requestClass)->build();
-                }
-            }
+            $requestBody = $this->getRequestBody($annotation, $controllerWithNamespace, $route);
 
             $newAnnotation = new $resourceClass(
                 path: $path,
                 operationId: $operationId,
                 description: $description,
-                requestBody: $requestBody ?? null,
+                requestBody: $requestBody,
                 tags: $tags,
                 responses: [
                     new SuccessResponse(ref: $responseRef),
@@ -182,5 +169,33 @@ class ApiResourceProcessor
     protected function getClassWithNameSpace(Operation $annotation): string
     {
         return "{$annotation->_context->namespace}\\{$annotation->_context->class}";
+    }
+
+    protected function getRequestBody(Operation $annotation, string $controller, RouteItem $route)
+    {
+        $requestBody = null;
+        $requestClass = $annotation->getRequestClass() ?? $this->extractRequestClassFromController($controller, $route);
+
+        if (!empty($requestClass)) {
+            $requestBody = $this->requestBodyBuilder->requestClass($requestClass)->build();
+        }
+
+        return $requestBody;
+    }
+
+    protected function extractRequestClassFromController(string $controller, RouteItem $route): ?string
+    {
+        $reflectedClass = new ReflectionClass($controller);
+        $method = $reflectedClass->getMethod($route->functionName);
+        $parameters = $method->getParameters();
+        $findRequestClass = array_filter($parameters, function ($parameter) {
+            return is_subclass_of(strtolower($parameter->getType()->getName()), Request::class);
+        });
+
+        if (! empty($findRequestClass)) {
+            return head($findRequestClass)->getType()->getName();
+        }
+
+        return null;
     }
 }

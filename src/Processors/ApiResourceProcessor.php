@@ -19,6 +19,7 @@ use OpenApi\Attributes\Patch;
 use OpenApi\Attributes\Post;
 use OpenApi\Generator;
 use ReflectionClass;
+use RuntimeException;
 
 class ApiResourceProcessor
 {
@@ -73,7 +74,7 @@ class ApiResourceProcessor
                 'POST' => Post::class,
                 'GET' => Get::class,
                 'PATCH' => Patch::class,
-                default => throw new \RuntimeException("Unsupported method {$route->method}"),
+                default => throw new RuntimeException("Unsupported method {$route->method}"),
             };
 
             // temporary hacky way to test response works or not
@@ -176,7 +177,7 @@ class ApiResourceProcessor
         $requestBody = null;
         $requestClass = $annotation->getRequestClass() ?? $this->extractRequestClassFromController($controller, $route);
 
-        if (!empty($requestClass)) {
+        if (! empty($requestClass)) {
             $requestBody = $this->requestBodyBuilder->requestClass($requestClass)->build();
         }
 

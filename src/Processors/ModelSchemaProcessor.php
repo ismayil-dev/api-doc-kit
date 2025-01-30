@@ -10,7 +10,7 @@ use IsmayilDev\ApiDocKit\Resolvers\ModelSchemaResolver;
 use OpenApi\Analysis;
 use OpenApi\Annotations\Operation;
 
-//@TODO GET RID OF THIS CLASS
+// @TODO GET RID OF THIS CLASS
 class ModelSchemaProcessor
 {
     public function __construct(protected ModelSchemaResolver $modelSchemaResolver) {}

@@ -2,20 +2,23 @@
 
 namespace IsmayilDev\ApiDocKit\Processors;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use IsmayilDev\ApiDocKit\Attributes\Resources\ApiResource;
 use IsmayilDev\ApiDocKit\Attributes\Responses\SuccessResponse;
+use IsmayilDev\ApiDocKit\Builders\RequestBodyBuilder;
+use IsmayilDev\ApiDocKit\Builders\RoutePathParameterBuilder;
 use IsmayilDev\ApiDocKit\Entities\DocEntity;
 use IsmayilDev\ApiDocKit\Entities\RouteItem;
 use IsmayilDev\ApiDocKit\Mappers\RouteMapper;
 use IsmayilDev\ApiDocKit\Resolvers\EntityResolver;
-use IsmayilDev\ApiDocKit\Routes\RoutePathParameterBuilder;
 use OpenApi\Analysis;
 use OpenApi\Annotations\Operation;
 use OpenApi\Attributes\Get;
 use OpenApi\Attributes\Patch;
 use OpenApi\Attributes\Post;
 use OpenApi\Generator;
+use ReflectionClass;
 
 class ApiResourceProcessor
 {
@@ -25,6 +28,7 @@ class ApiResourceProcessor
         private readonly RouteMapper $routeMapper,
         private readonly EntityResolver $entityResolver,
         private readonly RoutePathParameterBuilder $routeParameterBuilder,
+        private readonly RequestBodyBuilder $requestBodyBuilder,
     ) {}
 
     public function __invoke(Analysis $analysis): void
@@ -73,17 +77,33 @@ class ApiResourceProcessor
             };
 
             // temporary hacky way to test response works or not
-            // @TODO make this automatic
+            // @TODO make this automatic, for testing purposes it is written like this
             if ($controllerWithNamespace === 'App\Http\Controllers\Orders\OrderRetrieveController') {
                 $responseRef = '#/components/schemas/OrderResource';
             } else {
                 $responseRef = null;
             }
 
+            // @TODO Make this automatic, for testing purposes it is written like this
+            if ($controllerWithNamespace === 'App\Http\Controllers\Orders\OrderCreateController') {
+                $reflectedClass = new ReflectionClass($controllerWithNamespace);
+                $method = $reflectedClass->getMethod($route->functionName);
+                $parameters = $method->getParameters();
+                $findRequestClass = array_filter($parameters, function ($parameter) {
+                    return is_subclass_of(strtolower($parameter->getType()->getName()), Request::class);
+                });
+
+                if (! empty($findRequestClass)) {
+                    $requestClass = head($findRequestClass)->getType()->getName();
+                    $requestBody = $this->requestBodyBuilder->requestClass($requestClass)->build();
+                }
+            }
+
             $newAnnotation = new $resourceClass(
                 path: $path,
                 operationId: $operationId,
                 description: $description,
+                requestBody: $requestBody ?? null,
                 tags: $tags,
                 responses: [
                     new SuccessResponse(ref: $responseRef),

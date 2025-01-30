@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace IsmayilDev\ApiDocKit\Entities;
+namespace IsmayilDev\ApiDocKit\Routes;
 
-use IsmayilDev\ApiDocKit\Attributes\Enums\OpenApiPropertyType;
+use IsmayilDev\ApiDocKit\Enums\OpenApiPropertyType;
 
 class RoutePathParameter
 {

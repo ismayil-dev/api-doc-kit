@@ -6,7 +6,7 @@ namespace IsmayilDev\ApiDocKit\Processors;
 
 use Illuminate\Database\Eloquent\Model;
 use IsmayilDev\ApiDocKit\Attributes\Schema\ModelSchema;
-use IsmayilDev\ApiDocKit\Resolvers\ModelSchemaResolver;
+use IsmayilDev\ApiDocKit\Models\ModelSchemaResolver;
 use OpenApi\Analysis;
 use OpenApi\Annotations\Operation;
 

@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-namespace IsmayilDev\ApiDocKit\Entities;
+namespace IsmayilDev\ApiDocKit\Models;
 
 use Illuminate\Support\Str;
-use IsmayilDev\ApiDocKit\Generators\ModelExampleIdGenerator;
 
 readonly class DocEntity
 {

@@ -6,10 +6,9 @@ namespace IsmayilDev\ApiDocKit\Routes;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use IsmayilDev\ApiDocKit\Attributes\Enums\OpenApiPropertyType;
-use IsmayilDev\ApiDocKit\Entities\DocEntity;
-use IsmayilDev\ApiDocKit\Entities\RoutePathParameter;
-use IsmayilDev\ApiDocKit\Mappers\ModelMapper;
+use IsmayilDev\ApiDocKit\Enums\OpenApiPropertyType;
+use IsmayilDev\ApiDocKit\Models\DocEntity;
+use IsmayilDev\ApiDocKit\Models\ModelMapper;
 
 readonly class RoutePathParameterResolver
 {

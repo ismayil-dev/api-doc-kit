@@ -1,8 +1,7 @@
 <?php
 
-namespace IsmayilDev\ApiDocKit\Resolvers;
+namespace IsmayilDev\ApiDocKit\Models;
 
-use IsmayilDev\ApiDocKit\Entities\DocEntity;
 use RuntimeException;
 
 readonly class EntityResolver

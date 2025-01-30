@@ -2,17 +2,14 @@
 
 declare(strict_types=1);
 
-namespace IsmayilDev\ApiDocKit\Builders;
+namespace IsmayilDev\ApiDocKit\Routes;
 
 use Illuminate\Support\Collection;
-use IsmayilDev\ApiDocKit\Attributes\Enums\OpenApiPropertyType;
 use IsmayilDev\ApiDocKit\Attributes\Parameters\Routes\RoutePathIntegerParameter;
 use IsmayilDev\ApiDocKit\Attributes\Parameters\Routes\RoutePathStringParameter;
 use IsmayilDev\ApiDocKit\Attributes\Resources\ApiResource;
-use IsmayilDev\ApiDocKit\Entities\DocEntity;
-use IsmayilDev\ApiDocKit\Entities\RouteItem;
-use IsmayilDev\ApiDocKit\Entities\RoutePathParameter;
-use IsmayilDev\ApiDocKit\Routes\RoutePathParameterResolver;
+use IsmayilDev\ApiDocKit\Enums\OpenApiPropertyType;
+use IsmayilDev\ApiDocKit\Models\DocEntity;
 use ReflectionAttribute;
 use ReflectionClass;
 

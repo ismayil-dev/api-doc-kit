@@ -3,7 +3,7 @@
 namespace IsmayilDev\ApiDocKit\Attributes\Responses;
 
 use Attribute;
-use IsmayilDev\ApiDocKit\Attributes\Enums\OpenApiPropertyType;
+use IsmayilDev\ApiDocKit\Enums\OpenApiPropertyType;
 use OpenApi\Attributes\Items;
 use OpenApi\Attributes\JsonContent;
 use OpenApi\Attributes\Property;

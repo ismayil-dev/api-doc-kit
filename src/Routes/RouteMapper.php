@@ -1,11 +1,11 @@
 <?php
 
-namespace IsmayilDev\ApiDocKit\Mappers;
+namespace IsmayilDev\ApiDocKit\Routes;
 
 use Illuminate\Routing\Route as LaravelRoute;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
-use IsmayilDev\ApiDocKit\Entities\RouteItem as RouteItemEntity;
+use IsmayilDev\ApiDocKit\Routes\RouteItem as RouteItemEntity;
 
 class RouteMapper
 {

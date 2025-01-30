@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace IsmayilDev\ApiDocKit\Tests\Feature\Entities;
 
-use IsmayilDev\ApiDocKit\Entities\DocEntity;
+use IsmayilDev\ApiDocKit\Models\DocEntity;
 use IsmayilDev\ApiDocKit\Tests\Doubles\Models\User;
 
 describe('DocEntity Test', function () {

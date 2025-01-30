@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace IsmayilDev\ApiDocKit\Processors;
 
-use IsmayilDev\ApiDocKit\Attributes\Enums\OpenApiPropertyType;
 use IsmayilDev\ApiDocKit\Attributes\Schema\ResponseResource;
-use IsmayilDev\ApiDocKit\Entities\DocEntity;
-use IsmayilDev\ApiDocKit\Mappers\ModelMapper;
+use IsmayilDev\ApiDocKit\Enums\OpenApiPropertyType;
+use IsmayilDev\ApiDocKit\Models\DocEntity;
+use IsmayilDev\ApiDocKit\Models\ModelMapper;
 use IsmayilDev\ApiDocKit\Parsers\ArrayKeyParser;
 use OpenApi\Analysis;
 use OpenApi\Attributes\Property;

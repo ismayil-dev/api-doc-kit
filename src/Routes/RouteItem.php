@@ -1,6 +1,6 @@
 <?php
 
-namespace IsmayilDev\ApiDocKit\Entities;
+namespace IsmayilDev\ApiDocKit\Routes;
 
 class RouteItem
 {

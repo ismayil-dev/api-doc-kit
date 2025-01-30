@@ -1,6 +1,6 @@
 <?php
 
-namespace IsmayilDev\ApiDocKit\Generators;
+namespace IsmayilDev\ApiDocKit\Models;
 
 use Illuminate\Database\Eloquent\Model;
 

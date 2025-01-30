@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace IsmayilDev\ApiDocKit\Resolvers;
+namespace IsmayilDev\ApiDocKit\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;

@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace IsmayilDev\ApiDocKit\Builders;
+namespace IsmayilDev\ApiDocKit\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
-use IsmayilDev\ApiDocKit\Attributes\Enums\OpenApiPropertyType;
+use IsmayilDev\ApiDocKit\Enums\OpenApiPropertyType;
 use OpenApi\Attributes\MediaType;
 use OpenApi\Attributes\Property;
 use OpenApi\Attributes\RequestBody;

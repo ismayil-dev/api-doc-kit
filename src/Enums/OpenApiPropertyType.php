@@ -1,6 +1,6 @@
 <?php
 
-namespace IsmayilDev\ApiDocKit\Attributes\Enums;
+namespace IsmayilDev\ApiDocKit\Enums;
 
 use OpenApi\Attributes\Schema;
 

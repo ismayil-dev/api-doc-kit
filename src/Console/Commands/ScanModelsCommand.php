@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace IsmayilDev\ApiDocKit\Console\Commands;
 
 use Illuminate\Console\Command;
-use IsmayilDev\ApiDocKit\Mappers\ModelMapper;
+use IsmayilDev\ApiDocKit\Models\ModelMapper;
 
 class ScanModelsCommand extends Command
 {

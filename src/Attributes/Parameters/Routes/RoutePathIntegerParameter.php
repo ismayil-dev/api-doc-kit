@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace IsmayilDev\ApiDocKit\Attributes\Parameters\Routes;
 
 use Attribute;
-use IsmayilDev\ApiDocKit\Attributes\Enums\OpenApiPropertyType;
+use IsmayilDev\ApiDocKit\Enums\OpenApiPropertyType;
 use OpenApi\Attributes\Parameter;
 use OpenApi\Attributes\Schema;
 

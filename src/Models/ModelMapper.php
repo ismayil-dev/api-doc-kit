@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace IsmayilDev\ApiDocKit\Mappers;
+namespace IsmayilDev\ApiDocKit\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
-use IsmayilDev\ApiDocKit\Entities\DocEntity;
 
 class ModelMapper
 {

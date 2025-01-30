@@ -3,7 +3,7 @@
 namespace IsmayilDev\ApiDocKit\Attributes\Parameters\Query;
 
 use Attribute;
-use IsmayilDev\ApiDocKit\Attributes\Enums\OpenApiPropertyType;
+use IsmayilDev\ApiDocKit\Enums\OpenApiPropertyType;
 use OpenApi\Attributes\Parameter;
 use OpenApi\Attributes\Schema;
 use OpenApi\Generator;

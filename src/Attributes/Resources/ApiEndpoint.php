@@ -9,7 +9,7 @@ use IsmayilDev\ApiDocKit\Traits\ResourceTrait;
 use OpenApi\Annotations\Operation;
 
 #[Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD | \Attribute::IS_REPEATABLE)]
-class ApiResource extends Operation
+class ApiEndpoint extends Operation
 {
     use ResourceTrait;
 

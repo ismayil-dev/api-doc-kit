@@ -7,7 +7,7 @@ namespace IsmayilDev\ApiDocKit\Routes;
 use Illuminate\Support\Collection;
 use IsmayilDev\ApiDocKit\Attributes\Parameters\Routes\RoutePathIntegerParameter;
 use IsmayilDev\ApiDocKit\Attributes\Parameters\Routes\RoutePathStringParameter;
-use IsmayilDev\ApiDocKit\Attributes\Resources\ApiResource;
+use IsmayilDev\ApiDocKit\Attributes\Resources\ApiEndpoint;
 use IsmayilDev\ApiDocKit\Enums\OpenApiPropertyType;
 use IsmayilDev\ApiDocKit\Models\DocEntity;
 use ReflectionAttribute;
@@ -25,7 +25,7 @@ class RoutePathParameterBuilder
         $method = $reflection->getMethod($route->functionName);
         $resourceAttributes = collect($method->getAttributes())
             ->filter(function (ReflectionAttribute $attribute) {
-                return $attribute->getName() === ApiResource::class;
+                return $attribute->getName() === ApiEndpoint::class;
             });
 
         /** @var ReflectionAttribute $attribute */

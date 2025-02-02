@@ -4,7 +4,7 @@ namespace IsmayilDev\ApiDocKit\Processors;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use IsmayilDev\ApiDocKit\Attributes\Resources\ApiResource;
+use IsmayilDev\ApiDocKit\Attributes\Resources\ApiEndpoint;
 use IsmayilDev\ApiDocKit\Attributes\Responses\SuccessResponse;
 use IsmayilDev\ApiDocKit\Http\Requests\RequestBodyBuilder;
 use IsmayilDev\ApiDocKit\Models\DocEntity;
@@ -40,7 +40,7 @@ class ApiResourceProcessor
 
         /** @var Operation $annotation */
         foreach ($annotations as $annotation) {
-            if (! $annotation instanceof ApiResource) {
+            if (! $annotation instanceof ApiEndpoint) {
                 continue;
             }
 

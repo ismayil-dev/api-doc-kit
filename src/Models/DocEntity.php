@@ -71,4 +71,9 @@ readonly class DocEntity
 
         return $this->entity;
     }
+
+    public function getResourceName(): string
+    {
+        return $this->name().'Resource';
+    }
 }

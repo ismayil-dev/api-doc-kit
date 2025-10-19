@@ -19,8 +19,8 @@ trait ResourceTrait
         return $this->actionName;
     }
 
-    public function isList(): bool
+    public function getResponseEntity(): ?string
     {
-        return $this->isList;
+        return $this->responseEntity;
     }
 }

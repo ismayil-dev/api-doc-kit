@@ -17,7 +17,7 @@ class ApiEndpoint extends Operation
         private readonly string $entity,
         private readonly ?string $requestClass = null,
         private readonly ?string $actionName = null,
-        private readonly bool $isList = false,
+        private readonly ?string $responseEntity = null,
         ?string $path = null,
         ?string $summary = null,
         ?string $description = null,

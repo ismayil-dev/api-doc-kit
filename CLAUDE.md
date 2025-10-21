@@ -32,6 +32,9 @@ php artisan doc:generate
 
 # Scan models
 php artisan doc:scan-models
+
+# Publish config file
+php artisan vendor:publish --tag=api-doc-kit-config
 ```
 
 ## Architecture Overview
@@ -46,7 +49,7 @@ The package uses a processor-based architecture that intercepts OpenAPI generati
    - Resolves entities and response types using reflection
    - Auto-detects request classes from controller method signatures
    - Generates OpenAPI operations (GET, POST, PATCH, PUT, DELETE)
-   - Adds standard error responses (400, 401, 403, 404, 405, 422, 429, 500)
+   - Adds smart HTTP method-based error responses (see Smart Error Response Handling below)
 
 2. **ResponseResourceProcessor** (`src/Processors/ResponseResourceProcessor.php`) - Processes `#[ResponseResource]` attributes to generate OpenAPI schemas for API resources
 
@@ -57,7 +60,11 @@ The package uses a processor-based architecture that intercepts OpenAPI generati
 **Attributes System:**
 - `#[ApiEndpoint]` - Applied to controller methods to mark them for documentation
   - Parameters: `entity`, `requestClass`, `actionName`, `responseEntity`
+  - Optional: `errorResponses`, `successResponseSchema`, `errorResponseSchemas`
   - Auto-generates `operationId`, `description`, and `tags` based on entity
+- `#[ErrorResponses]` - Controls which error responses are included
+  - `only: [400, 422]` - Include only specific status codes
+  - `except: [404]` - Exclude specific status codes from defaults
 - `#[ResponseResource]` - Applied to API resource classes to define response schemas
 - `#[ApiResponse]` - Wraps OpenAPI responses with status codes and content types
 
@@ -135,3 +142,150 @@ The package hooks into the zircote/swagger-php generation pipeline:
 **Description Generation:**
 - Auto-generated from entity name and action name
 - Example: "Update User", "Get Users", "Create Post"
+
+## Smart Error Response Handling
+
+The package intelligently determines which error responses to include based on HTTP method, reducing documentation noise while maintaining accuracy.
+
+### Default Error Responses by HTTP Method
+
+- **GET**: 401, 403, 404, 429, 500
+- **POST**: 400, 401, 403, 422, 429, 500
+- **PATCH/PUT**: 400, 401, 403, 404, 422, 429, 500
+- **DELETE**: 401, 403, 404, 429, 500
+
+### Overriding Error Responses
+
+**Global Config Override (affects all endpoints):**
+
+In `config/api-doc-kit.php`:
+
+```php
+'responses' => [
+    'error' => [
+        'defaults_per_method' => [
+            'GET' => [
+                Response::HTTP_UNAUTHORIZED,
+                Response::HTTP_FORBIDDEN,
+                Response::HTTP_NOT_FOUND,
+            ],
+            'POST' => [
+                Response::HTTP_BAD_REQUEST,
+                Response::HTTP_UNAUTHORIZED,
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            ],
+            // PATCH, PUT, DELETE...
+        ],
+    ],
+],
+```
+
+**Per-Endpoint Override (using attributes):**
+
+```php
+// Include only specific errors
+#[ApiEndpoint(
+    entity: User::class,
+    errorResponses: new ErrorResponses(only: [
+        Response::HTTP_UNAUTHORIZED,
+        Response::HTTP_UNPROCESSABLE_ENTITY,
+    ])
+)]
+public function store(CreateUserRequest $request): CreatedResponse
+
+// Exclude specific errors from defaults
+#[ApiEndpoint(
+    entity: User::class,
+    errorResponses: new ErrorResponses(except: [Response::HTTP_NOT_FOUND])
+)]
+public function index(): CollectionResponse
+```
+
+## Custom Response Schema Overrides
+
+Developers can override response structures at three levels: per-endpoint (attribute), globally (config), or use defaults.
+
+### ResponseSchemaBuilder Service
+
+`src/Http/Responses/ResponseSchemaBuilder.php` handles response schema resolution:
+- Checks for attribute-level overrides first
+- Falls back to config-level overrides
+- Uses default implementations as last resort
+
+### Per-Endpoint Custom Schemas (Attribute-Level)
+
+```php
+// Custom success response schema
+#[ApiEndpoint(
+    entity: User::class,
+    successResponseSchema: CustomUserResponseContent::class
+)]
+public function show(User $user): SingleResourceResponse
+
+// Custom error response schemas per status code
+#[ApiEndpoint(
+    entity: User::class,
+    errorResponseSchemas: [
+        422 => CustomValidationErrorContent::class,
+        400 => CustomBadRequestContent::class,
+    ]
+)]
+public function store(CreateUserRequest $request): CreatedResponse
+```
+
+### Global Custom Schemas (Config-Level)
+
+In `config/api-doc-kit.php`:
+
+```php
+'responses' => [
+    'success' => [
+        'single' => \App\OpenApi\Schemas\SingleResourceContent::class,
+        'collection' => \App\OpenApi\Schemas\CollectionContent::class,
+        'paginated' => \App\OpenApi\Schemas\PaginatedContent::class,
+        'created' => null,  // Use default
+        'updated' => null,  // Use default
+        'empty' => null,    // Use default
+    ],
+    'error' => [
+        // Global error schema for all error responses
+        'schema' => \App\OpenApi\Schemas\ErrorContent::class,
+
+        // Per-status-code error schemas (overrides global)
+        'per_status' => [
+            400 => \App\OpenApi\Schemas\BadRequestContent::class,
+            422 => \App\OpenApi\Schemas\ValidationErrorContent::class,
+        ],
+
+        // Custom descriptions for error responses
+        'descriptions' => [
+            400 => 'Invalid request parameters provided',
+            401 => 'Authentication required',
+            422 => 'The given data failed validation',
+        ],
+    ],
+],
+```
+
+### Resolution Priority
+
+**Success Responses:**
+1. Attribute `successResponseSchema` parameter
+2. Config `responses.success.{type}`
+3. Default implementation
+
+**Error Responses:**
+1. Attribute `errorResponseSchemas[$statusCode]`
+2. Config `responses.error.per_status[$statusCode]`
+3. Config `responses.error.schema` (global override)
+4. Default `JsonErrorContent`
+
+**Error Status Codes (which errors to include):**
+1. Attribute `#[ErrorResponses]` (only/except)
+2. Config `responses.error.defaults_per_method[{METHOD}]`
+3. Package default for HTTP method
+
+**Error Descriptions:**
+1. Attribute-level custom description (not yet implemented in attribute)
+2. Config `responses.error.descriptions[$statusCode]`
+3. Default descriptions

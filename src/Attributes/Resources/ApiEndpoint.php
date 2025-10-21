@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace IsmayilDev\ApiDocKit\Attributes\Resources;
 
 use Attribute;
+use IsmayilDev\ApiDocKit\Attributes\Responses\ErrorResponses;
 use IsmayilDev\ApiDocKit\Traits\ResourceTrait;
 use OpenApi\Annotations\Operation;
+use OpenApi\Attributes\MediaType;
 
 #[Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD | \Attribute::IS_REPEATABLE)]
 class ApiEndpoint extends Operation
@@ -18,6 +20,9 @@ class ApiEndpoint extends Operation
         private readonly ?string $requestClass = null,
         private readonly ?string $actionName = null,
         private readonly ?string $responseEntity = null,
+        private readonly ?ErrorResponses $errorResponses = null,
+        private readonly MediaType|string|null $successResponseSchema = null,
+        private readonly ?array $errorResponseSchemas = null,
         ?string $path = null,
         ?string $summary = null,
         ?string $description = null,

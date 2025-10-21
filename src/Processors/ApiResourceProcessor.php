@@ -3,19 +3,14 @@
 namespace IsmayilDev\ApiDocKit\Processors;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Str;
 use IsmayilDev\ApiDocKit\Attributes\Resources\ApiEndpoint;
 use IsmayilDev\ApiDocKit\Attributes\Responses\ApiResponse;
-use IsmayilDev\ApiDocKit\Attributes\Responses\JsonCollectionContent;
-use IsmayilDev\ApiDocKit\Attributes\Responses\JsonErrorContent;
-use IsmayilDev\ApiDocKit\Attributes\Responses\JsonPaginatedContent;
 use IsmayilDev\ApiDocKit\Http\Requests\RequestBodyBuilder;
 use IsmayilDev\ApiDocKit\Http\Responses\Contracts\CollectionResponse;
-use IsmayilDev\ApiDocKit\Http\Responses\Contracts\CreatedResponse;
-use IsmayilDev\ApiDocKit\Http\Responses\Contracts\EmptyResponse;
 use IsmayilDev\ApiDocKit\Http\Responses\Contracts\PaginatedResponse;
-use IsmayilDev\ApiDocKit\Http\Responses\Contracts\SingleResourceResponse;
-use IsmayilDev\ApiDocKit\Http\Responses\Contracts\UpdatedResponse;
+use IsmayilDev\ApiDocKit\Http\Responses\ResponseSchemaBuilder;
 use IsmayilDev\ApiDocKit\Models\DocEntity;
 use IsmayilDev\ApiDocKit\Models\EntityResolver;
 use IsmayilDev\ApiDocKit\Routes\RouteItem;
@@ -42,6 +37,7 @@ class ApiResourceProcessor
         private readonly EntityResolver $entityResolver,
         private readonly RoutePathParameterBuilder $routeParameterBuilder,
         private readonly RequestBodyBuilder $requestBodyBuilder,
+        private readonly ResponseSchemaBuilder $responseSchemaBuilder,
     ) {}
 
     public function __invoke(Analysis $analysis): void
@@ -98,7 +94,7 @@ class ApiResourceProcessor
                 $responseRef = '#/components/schemas/'.$entity->getResourceName();
             }
 
-            $response = $this->getResponse($responseType, $responseRef);
+            $response = $this->getResponse($responseType, $responseRef, $annotation);
 
             $requestBody = $this->getRequestBody($annotation, $controllerWithNamespace, $route);
 
@@ -110,7 +106,7 @@ class ApiResourceProcessor
                 tags: $tags,
                 responses: [
                     $response,
-                    ...$this->getErrorResponses(),
+                    ...$this->getErrorResponses($route->method, $annotation),
                 ]
             );
 
@@ -251,70 +247,109 @@ class ApiResourceProcessor
     /**
      * @throws ReflectionException
      */
-    protected function getResponse(string $responseType, string $responseRef): ?ApiResponse
+    protected function getResponse(string $responseType, string $responseRef, ?Operation $annotation = null): ?ApiResponse
     {
-        return match ($responseType) {
-            CreatedResponse::class => new ApiResponse(201, 'Created response', $responseRef),
-            CollectionResponse::class => new ApiResponse(
-                statusCode: 200,
-                description: 'Collection response',
-                content: new JsonCollectionContent($responseRef)
-            ),
-            PaginatedResponse::class => new ApiResponse(
-                statusCode: 200,
-                description: 'Paginated response',
-                content: new JsonPaginatedContent($responseRef)
-            ),
-            EmptyResponse::class => new ApiResponse(204, 'Empty response', null),
-            SingleResourceResponse::class => new ApiResponse(200, 'Single resource response', $responseRef),
-            UpdatedResponse::class => new ApiResponse(200, 'Updated response', $responseRef),
-            default => null,
+        // Check if annotation has custom success response schema
+        $customSchema = null;
+        if ($annotation instanceof ApiEndpoint && $annotation->getSuccessResponseSchema() !== null) {
+            $customSchema = $annotation->getSuccessResponseSchema();
+        }
+
+        // Use ResponseSchemaBuilder to build the response
+        return $this->responseSchemaBuilder->buildSuccessResponse(
+            responseType: $responseType,
+            responseRef: $responseRef,
+            customSchema: $customSchema
+        );
+    }
+
+    /**
+     * Get default error status codes based on HTTP method
+     *
+     * @return array<int>
+     */
+    protected function getDefaultErrorCodesForMethod(string $httpMethod): array
+    {
+        $method = strtoupper($httpMethod);
+
+        // Check for config override first
+        $configOverride = config("api-doc-kit.responses.error.defaults_per_method.{$method}");
+        if (is_array($configOverride)) {
+            return $configOverride;
+        }
+
+        // Use package defaults
+        return match ($method) {
+            'GET' => [
+                Response::HTTP_UNAUTHORIZED,
+                Response::HTTP_FORBIDDEN,
+                Response::HTTP_NOT_FOUND,
+                Response::HTTP_TOO_MANY_REQUESTS,
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+            ],
+            'POST' => [
+                Response::HTTP_BAD_REQUEST,
+                Response::HTTP_UNAUTHORIZED,
+                Response::HTTP_FORBIDDEN,
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                Response::HTTP_TOO_MANY_REQUESTS,
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+            ],
+            'PATCH', 'PUT' => [
+                Response::HTTP_BAD_REQUEST,
+                Response::HTTP_UNAUTHORIZED,
+                Response::HTTP_FORBIDDEN,
+                Response::HTTP_NOT_FOUND,
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                Response::HTTP_TOO_MANY_REQUESTS,
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+            ],
+            'DELETE' => [
+                Response::HTTP_UNAUTHORIZED,
+                Response::HTTP_FORBIDDEN,
+                Response::HTTP_NOT_FOUND,
+                Response::HTTP_TOO_MANY_REQUESTS,
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+            ],
+            default => [
+                Response::HTTP_BAD_REQUEST,
+                Response::HTTP_UNAUTHORIZED,
+                Response::HTTP_FORBIDDEN,
+                Response::HTTP_NOT_FOUND,
+                Response::HTTP_METHOD_NOT_ALLOWED,
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                Response::HTTP_TOO_MANY_REQUESTS,
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+            ],
         };
     }
 
-    protected function getErrorResponses(): array
+    protected function getErrorResponses(string $httpMethod, ?Operation $annotation = null): array
     {
-        return [
-            new ApiResponse(
-                statusCode: 400,
-                description: 'Bad request',
-                content: new JsonErrorContent
-            ),
-            new ApiResponse(
-                statusCode: 401,
-                description: 'Unauthorized',
-                content: new JsonErrorContent
-            ),
-            new ApiResponse(
-                statusCode: 403,
-                description: 'Forbidden',
-                content: new JsonErrorContent
-            ),
-            new ApiResponse(
-                statusCode: 404,
-                description: 'Not found',
-                content: new JsonErrorContent
-            ),
-            new ApiResponse(
-                statusCode: 405,
-                description: 'Method not allowed',
-                content: new JsonErrorContent
-            ),
-            new ApiResponse(
-                statusCode: 422,
-                description: 'Validation failed',
-                content: new JsonErrorContent
-            ),
-            new ApiResponse(
-                statusCode: 429,
-                description: 'Too many requests',
-                content: new JsonErrorContent
-            ),
-            new ApiResponse(
-                statusCode: 500,
-                description: 'Internal server error',
-                content: new JsonErrorContent
-            ),
-        ];
+        $defaultCodes = $this->getDefaultErrorCodesForMethod($httpMethod);
+
+        // Check if annotation has ErrorResponses attribute
+        if ($annotation instanceof ApiEndpoint && $annotation->getErrorResponses() !== null) {
+            $errorResponsesAttr = $annotation->getErrorResponses();
+            $defaultCodes = $errorResponsesAttr->filter($defaultCodes);
+        }
+
+        // Get custom error response schemas from annotation if available
+        $customSchemas = [];
+        if ($annotation instanceof ApiEndpoint && $annotation->getErrorResponseSchemas() !== null) {
+            $customSchemas = $annotation->getErrorResponseSchemas();
+        }
+
+        // Build error responses using ResponseSchemaBuilder
+        $errorResponses = [];
+        foreach ($defaultCodes as $statusCode) {
+            $customSchema = $customSchemas[$statusCode] ?? null;
+            $errorResponses[] = $this->responseSchemaBuilder->buildErrorResponse(
+                statusCode: $statusCode,
+                customSchema: $customSchema
+            );
+        }
+
+        return $errorResponses;
     }
 }

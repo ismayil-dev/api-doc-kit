@@ -37,10 +37,10 @@ test('EnumSchemaProcessor generates correct schema for integer-backed enums', fu
     $orderPaymentStatusSchema = $data['components']['schemas']['OrderPaymentStatus'];
 
     // Assert OrderPaymentStatus (int-backed) has correct schema
-    expect($orderPaymentStatusSchema['type'])->toBe('integer');
-    expect($orderPaymentStatusSchema['enum'])->toBe([0, 1, 2, 3]);
-    expect($orderPaymentStatusSchema)->toHaveKey('x-enum-varnames');
-    expect($orderPaymentStatusSchema['x-enum-varnames'])->toBe(['Pending', 'Paid', 'Refunded', 'Cancelled']);
+    expect($orderPaymentStatusSchema['type'])->toBe('integer')
+        ->and($orderPaymentStatusSchema['enum'])->toBe([0, 1, 2, 3])
+        ->and($orderPaymentStatusSchema)->toHaveKey('x-enum-varnames')
+        ->and($orderPaymentStatusSchema['x-enum-varnames'])->toBe(['Pending', 'Paid', 'Refunded', 'Cancelled']);
 });
 
 test('EnumSchemaProcessor generates correct schema for string-backed enums', function () {
@@ -69,11 +69,11 @@ test('EnumSchemaProcessor generates correct schema for string-backed enums', fun
     $orderStatusSchema = $data['components']['schemas']['OrderStatus'];
 
     // Assert OrderStatus (string-backed) has correct schema
-    expect($orderStatusSchema['type'])->toBe('string');
-    expect($orderStatusSchema['enum'])->toBe(['draft', 'pending', 'completed', 'cancelled']);
+    expect($orderStatusSchema['type'])->toBe('string')
+        ->and($orderStatusSchema['enum'])->toBe(['draft', 'pending', 'completed', 'cancelled'])
+        ->and($orderStatusSchema)->toHaveKey('x-enum-varnames')
+        ->and($orderStatusSchema['x-enum-varnames'])->toBe(['Draft', 'Pending', 'Completed', 'Cancelled']);
 
     // String enums should ALSO have x-enum-varnames
     // This is useful when case names differ from values (e.g., InProgress vs 'in_progress')
-    expect($orderStatusSchema)->toHaveKey('x-enum-varnames');
-    expect($orderStatusSchema['x-enum-varnames'])->toBe(['Draft', 'Pending', 'Completed', 'Cancelled']);
 });

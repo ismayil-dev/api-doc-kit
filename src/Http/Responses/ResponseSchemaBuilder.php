@@ -13,8 +13,6 @@ use IsmayilDev\ApiDocKit\Http\Responses\Contracts\CollectionResponse;
 use IsmayilDev\ApiDocKit\Http\Responses\Contracts\CreatedResponse;
 use IsmayilDev\ApiDocKit\Http\Responses\Contracts\EmptyResponse;
 use IsmayilDev\ApiDocKit\Http\Responses\Contracts\PaginatedResponse;
-use IsmayilDev\ApiDocKit\Http\Responses\Contracts\SingleResourceResponse;
-use IsmayilDev\ApiDocKit\Http\Responses\Contracts\UpdatedResponse;
 use OpenApi\Attributes\MediaType;
 
 class ResponseSchemaBuilder
@@ -102,17 +100,11 @@ class ResponseSchemaBuilder
                 'Empty response',
                 null
             ),
-            SingleResourceResponse::class => new ApiResponse(
+            default => new ApiResponse(
                 Response::HTTP_OK,
                 'Single resource response',
                 $responseRef
             ),
-            UpdatedResponse::class => new ApiResponse(
-                Response::HTTP_OK,
-                'Updated response',
-                $responseRef
-            ),
-            default => null,
         };
     }
 
@@ -142,13 +134,11 @@ class ResponseSchemaBuilder
     protected function getConfigSuccessOverride(string $responseType): ?string
     {
         $key = match ($responseType) {
-            SingleResourceResponse::class => 'single',
             CollectionResponse::class => 'collection',
             PaginatedResponse::class => 'paginated',
             CreatedResponse::class => 'created',
-            UpdatedResponse::class => 'updated',
             EmptyResponse::class => 'empty',
-            default => null,
+            default => 'single',
         };
 
         if ($key === null) {
@@ -222,8 +212,6 @@ class ResponseSchemaBuilder
             CollectionResponse::class => 'Collection response',
             PaginatedResponse::class => 'Paginated response',
             EmptyResponse::class => 'Empty response',
-            SingleResourceResponse::class => 'Single resource response',
-            UpdatedResponse::class => 'Updated response',
             default => 'Success',
         };
     }

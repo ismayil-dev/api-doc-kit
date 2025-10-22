@@ -9,7 +9,6 @@ use IsmayilDev\ApiDocKit\Http\Responses\Contracts\CreatedResponse;
 use IsmayilDev\ApiDocKit\Http\Responses\Contracts\EmptyResponse;
 use IsmayilDev\ApiDocKit\Http\Responses\Contracts\PaginatedResponse;
 use IsmayilDev\ApiDocKit\Http\Responses\Contracts\SingleResourceResponse;
-use IsmayilDev\ApiDocKit\Http\Responses\Contracts\UpdatedResponse;
 
 class ApiResponse
 {
@@ -21,11 +20,6 @@ class ApiResponse
     public static function created(mixed $item): CreatedResponse
     {
         return new ResourceCreated($item);
-    }
-
-    public static function updated(mixed $item): UpdatedResponse
-    {
-        return new ResourceUpdated($item);
     }
 
     public static function empty(): EmptyResponse

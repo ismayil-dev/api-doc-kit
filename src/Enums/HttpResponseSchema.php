@@ -8,7 +8,6 @@ use IsmayilDev\ApiDocKit\Http\Responses\Contracts\CollectionResponse;
 use IsmayilDev\ApiDocKit\Http\Responses\Contracts\CreatedResponse;
 use IsmayilDev\ApiDocKit\Http\Responses\Contracts\EmptyResponse;
 use IsmayilDev\ApiDocKit\Http\Responses\Contracts\SingleResourceResponse;
-use IsmayilDev\ApiDocKit\Http\Responses\Contracts\UpdatedResponse;
 use IsmayilDev\ApiDocKit\Http\Responses\PaginatedResource;
 
 enum HttpResponseSchema: string
@@ -18,5 +17,4 @@ enum HttpResponseSchema: string
     case PaginatedResource = PaginatedResource::class;
     case CreatedResponse = CreatedResponse::class;
     case EmptyResponse = EmptyResponse::class;
-    case UpdatedResponse = UpdatedResponse::class;
 }

@@ -4,7 +4,7 @@ The `#[Enum]` attribute enables proper OpenAPI schema generation for PHP enums, 
 
 ## Quick Start
 
-### String-Backed Enums (Already Work Perfectly)
+### String-Backed Enums
 
 ```php
 use IsmayilDev\ApiDocKit\Attributes\Schema\Enum;
@@ -28,6 +28,7 @@ OrderStatus:
     - pending
     - completed
     - cancelled
+  x-enum-varnames: ['Draft', 'Pending', 'Completed', 'Cancelled']  # ← Added for all enums!
 ```
 
 **Generated TypeScript SDK:**
@@ -40,7 +41,9 @@ export enum OrderStatus {
 }
 ```
 
-### Integer-Backed Enums (Fixed with x-enum-varnames)
+> **Note:** `x-enum-varnames` is now added for all backed enums (both string and integer). This is especially useful when enum case names differ from values (e.g., `InProgress` vs `'in_progress'`).
+
+### Integer-Backed Enums
 
 ```php
 use IsmayilDev\ApiDocKit\Attributes\Schema\Enum;
@@ -55,7 +58,7 @@ enum OrderPaymentStatus: int
 }
 ```
 
-**Generated OpenAPI (Before):**
+**Generated OpenAPI (Before #[Enum]):**
 ```yaml
 OrderPaymentStatus:
   type: integer
@@ -98,8 +101,8 @@ export enum OrderPaymentStatus {
 The `x-enum-varnames` is a widely-supported OpenAPI extension that maps enum values to their proper names:
 
 - **Standard**: Supported by OpenAPI Generator, Redocly, openapi-typescript, and most SDK generators
-- **Purpose**: Provides variable names for enum values (especially important for integers)
-- **Automatic**: The `EnumSchemaProcessor` adds this automatically for integer enums
+- **Purpose**: Provides variable names for enum values (important for integers and when string case names differ from values)
+- **Automatic**: The `EnumSchemaProcessor` adds this automatically for all backed enums
 
 ### Processing Flow
 
@@ -107,9 +110,10 @@ The `x-enum-varnames` is a widely-supported OpenAPI extension that maps enum val
 2. **Type Detection**: Determines if enum is string-backed or int-backed
 3. **Case Extraction**: Extracts all enum cases (names and values)
 4. **Schema Generation**:
-   - **String enums**: Standard schema (names are already in values)
-   - **Int enums**: Adds `x-enum-varnames` array with case names
-5. **SDK Generation**: SDK generators use `x-enum-varnames` to create proper enums
+   - Sets appropriate type (`integer` or `string`)
+   - Sets enum values array
+   - Adds `x-enum-varnames` array with case names for all backed enums
+5. **SDK Generation**: SDK generators use `x-enum-varnames` to create proper enums with correct case names
 
 ## Advanced Usage
 
@@ -238,11 +242,11 @@ public enum Priority {
 
 ## Best Practices
 
-1. **Always use `#[Enum]`** - Mark all enums used in API responses
-2. **Prefer string enums** - Better API clarity and already work without x-enum-varnames
-3. **Use int enums for IDs** - When you need specific numeric values (e.g., database IDs)
-4. **Descriptive names** - Use clear case names that translate well to SDKs
-5. **Add descriptions** - Help API consumers understand enum meanings
+1. **Always use `#[Enum]`** - Mark all enums used in API responses to ensure proper SDK generation
+2. **Prefer string enums** - Better API clarity for developers consuming your API
+3. **Use int enums for IDs** - When you need specific numeric values (e.g., database IDs, status codes)
+4. **Descriptive case names** - Use clear case names that translate well to SDKs (e.g., `InProgress`, not `in_progress`)
+5. **Add descriptions** - Help API consumers understand enum meanings and usage
 
 ## Migration Guide
 
@@ -285,9 +289,9 @@ Your SDKs will now generate with proper enum names!
 
 ### x-enum-varnames Not Appearing
 
-- Only added for **integer-backed** enums
-- String enums don't need it (names are already values)
-- Verify enum extends `BackedEnum` and uses `int` type
+- Should be added for all **backed enums** (both string and integer)
+- Unit enums (without backing values) don't get `x-enum-varnames`
+- Verify enum extends `BackedEnum` (has `: string` or `: int` declaration)
 
 ## References
 

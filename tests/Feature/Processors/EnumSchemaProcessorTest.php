@@ -72,7 +72,8 @@ test('EnumSchemaProcessor generates correct schema for string-backed enums', fun
     expect($orderStatusSchema['type'])->toBe('string');
     expect($orderStatusSchema['enum'])->toBe(['draft', 'pending', 'completed', 'cancelled']);
 
-    // String enums should NOT have x-enum-varnames
-    // (they don't need it since names are already in values)
-    expect($orderStatusSchema)->not->toHaveKey('x-enum-varnames');
+    // String enums should ALSO have x-enum-varnames
+    // This is useful when case names differ from values (e.g., InProgress vs 'in_progress')
+    expect($orderStatusSchema)->toHaveKey('x-enum-varnames');
+    expect($orderStatusSchema['x-enum-varnames'])->toBe(['Draft', 'Pending', 'Completed', 'Cancelled']);
 });

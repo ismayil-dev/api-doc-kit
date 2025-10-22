@@ -87,8 +87,10 @@ readonly class EnumSchemaProcessor
                 // Set enum values
                 $annotation->enum = $values;
 
-                // For integer enums, add x-enum-varnames to help SDK generators
-                if ($isIntEnum) {
+                // Add x-enum-varnames for all backed enums to help SDK generators
+                // This is especially useful when enum case names differ from values
+                // (e.g., InProgress vs 'in_progress', or integer values like 0, 1, 2)
+                if ($firstCase instanceof BackedEnum) {
                     $existingX = is_array($annotation->x) ? $annotation->x : [];
                     $annotation->x = array_merge(
                         $existingX,

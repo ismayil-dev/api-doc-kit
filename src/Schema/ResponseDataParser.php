@@ -8,7 +8,10 @@ use BackedEnum;
 use DateTimeInterface;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Facades\Log;
+use IsmayilDev\ApiDocKit\Attributes\Schema\DataSchema;
+use IsmayilDev\ApiDocKit\Attributes\Schema\Enum as EnumAttribute;
 use IsmayilDev\ApiDocKit\Enums\OpenApiPropertyType;
+use IsmayilDev\ApiDocKit\Exceptions\MissingEnumAttributeException;
 use IsmayilDev\ApiDocKit\Exceptions\StrictModeException;
 use OpenApi\Attributes\Property;
 use PhpParser\Node;
@@ -34,6 +37,9 @@ class ResponseDataParser
 {
     private ParserFactory $parserFactory;
 
+    /** @var string|null Current class being parsed (for error messages) */
+    private ?string $currentClassName = null;
+
     public function __construct()
     {
         $this->parserFactory = new ParserFactory;
@@ -48,9 +54,11 @@ class ResponseDataParser
      *
      * @throws ReflectionException
      * @throws StrictModeException
+     * @throws MissingEnumAttributeException
      */
     public function parse(string $className, ?array $explicitProperties = null): array
     {
+        $this->currentClassName = $className;
         try {
             $reflection = new ReflectionClass($className);
         } catch (ReflectionException $e) {
@@ -364,12 +372,40 @@ class ResponseDataParser
 
     /**
      * Build OpenAPI Property from PHP type
+     *
+     * @throws MissingEnumAttributeException
      */
     protected function buildProperty(
         string $name,
         ReflectionNamedType|ReflectionUnionType $type,
         bool $nullable = false,
     ): Property {
+        // Check if type is an enum
+        $enumClass = $this->extractEnumClass($type);
+        if ($enumClass !== null) {
+            // Verify enum has #[Enum] attribute
+            $this->verifyEnumHasAttribute($enumClass, $name);
+
+            // Return property with $ref to enum schema
+            return new Property(
+                property: $name,
+                ref: '#/components/schemas/'.class_basename($enumClass),
+                nullable: $nullable,
+            );
+        }
+
+        // Check if type is a value object (class with #[DataSchema])
+        $dataSchemaClass = $this->extractDataSchemaClass($type);
+        if ($dataSchemaClass !== null) {
+            // Return property with $ref to value object schema
+            return new Property(
+                property: $name,
+                ref: '#/components/schemas/'.class_basename($dataSchemaClass),
+                nullable: $nullable,
+            );
+        }
+
+        // For non-enum, non-value-object types, use standard type mapping
         $openApiType = $this->mapPhpTypeToOpenApi($type);
         $example = $this->getExampleValue($openApiType);
 
@@ -379,6 +415,123 @@ class ResponseDataParser
             example: $example,
             nullable: $nullable,
         );
+    }
+
+    /**
+     * Extract enum class from type if it's an enum
+     *
+     * @return class-string|null
+     */
+    protected function extractEnumClass(ReflectionNamedType|ReflectionUnionType $type): ?string
+    {
+        if ($type instanceof ReflectionUnionType) {
+            // For union types, find the first enum type
+            foreach ($type->getTypes() as $subType) {
+                if ($subType instanceof ReflectionNamedType) {
+                    $typeName = $subType->getName();
+                    if ($typeName !== 'null' && enum_exists($typeName)) {
+                        return $typeName;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        if ($type instanceof ReflectionNamedType) {
+            $typeName = $type->getName();
+            if (enum_exists($typeName)) {
+                return $typeName;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Verify that an enum class has the #[Enum] attribute
+     *
+     * @param  class-string  $enumClass
+     *
+     * @throws MissingEnumAttributeException
+     */
+    protected function verifyEnumHasAttribute(string $enumClass, string $propertyName): void
+    {
+        try {
+            $reflection = new ReflectionClass($enumClass);
+            $attributes = $reflection->getAttributes(EnumAttribute::class);
+
+            if (empty($attributes)) {
+                throw MissingEnumAttributeException::create(
+                    $enumClass,
+                    $this->currentClassName ?? 'Unknown',
+                    $propertyName
+                );
+            }
+        } catch (ReflectionException $e) {
+            // If we can't reflect the enum, throw the missing attribute exception anyway
+            throw MissingEnumAttributeException::create(
+                $enumClass,
+                $this->currentClassName ?? 'Unknown',
+                $propertyName
+            );
+        }
+    }
+
+    /**
+     * Extract DataSchema class from type if it's a value object
+     *
+     * @return class-string|null
+     */
+    protected function extractDataSchemaClass(ReflectionNamedType|ReflectionUnionType $type): ?string
+    {
+        if ($type instanceof ReflectionUnionType) {
+            // For union types, find the first class with DataSchema
+            foreach ($type->getTypes() as $subType) {
+                if ($subType instanceof ReflectionNamedType) {
+                    $typeName = $subType->getName();
+                    if ($typeName !== 'null' && $this->hasDataSchemaAttribute($typeName)) {
+                        return $typeName;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        if ($type instanceof ReflectionNamedType) {
+            $typeName = $type->getName();
+            if ($this->hasDataSchemaAttribute($typeName)) {
+                return $typeName;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if a class has the #[DataSchema] attribute
+     */
+    protected function hasDataSchemaAttribute(string $className): bool
+    {
+        // Only check classes (not enums, interfaces, or built-in types)
+        if (! class_exists($className)) {
+            return false;
+        }
+
+        // Don't treat special classes as value objects
+        if (is_subclass_of($className, DateTimeInterface::class)) {
+            return false;
+        }
+
+        try {
+            $reflection = new ReflectionClass($className);
+            $attributes = $reflection->getAttributes(DataSchema::class);
+
+            return ! empty($attributes);
+        } catch (ReflectionException) {
+            return false;
+        }
     }
 
     /**

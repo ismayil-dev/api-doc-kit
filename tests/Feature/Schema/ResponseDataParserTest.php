@@ -121,8 +121,8 @@ describe('ResponseDataParser', function () {
                 $propertiesByName[$property->property] = $property;
             }
 
-            // status is OrderStatus enum, should be mapped to string
-            expect($propertiesByName['status']->type)->toBe('string');
+            // status is OrderStatus enum, should now have $ref to enum schema
+            expect($propertiesByName['status']->ref)->toBe('#/components/schemas/OrderStatus');
         });
     });
 

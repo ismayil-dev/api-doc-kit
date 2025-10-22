@@ -46,7 +46,11 @@ class RoutePathParameterBuilder
             $parameters->push(...$mappedParameters);
         }
 
-        return $parameters;
+        // Deduplicate parameters by name to prevent duplicates in generated OpenAPI
+        // This can happen when swagger-php merges operations or when parameters are added from multiple sources
+        return $parameters->unique(function ($parameter) {
+            return $parameter->name;
+        })->values();
     }
 
     private function mapToOpenApiAttribute(Collection $routeParameters): Collection

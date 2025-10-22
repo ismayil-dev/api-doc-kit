@@ -98,4 +98,29 @@ return [
     'headers' => [
 
     ],
+
+    /**
+     * Schema generation settings
+     */
+    'schema' => [
+        /**
+         * Strict mode for DataSchema attribute
+         *
+         * When enabled, computed fields in toArray() that cannot be auto-detected
+         * must be explicitly defined using property attributes (IntProperty, StringProperty, etc.)
+         *
+         * When disabled (default), unknown computed fields will default to 'string' type
+         * with a warning logged.
+         *
+         * Example with explicit properties:
+         * #[DataSchema(
+         *     properties: [
+         *         new StringProperty(property: 'formatted_total', description: 'Formatted amount', example: '$99.99'),
+         *     ]
+         * )]
+         *
+         * Recommended: Enable strict mode in production to ensure accurate documentation
+         */
+        'strict_mode' => false,
+    ],
 ];

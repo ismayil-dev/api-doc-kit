@@ -88,8 +88,13 @@ class ApiResourceProcessor
                 default => throw new RuntimeException("Unsupported method {$route->method}"),
             };
 
-            if ($annotation->getResponseEntity() !== null) {
-                $responseRef = '#/components/schemas/'.$annotation->getResponseEntity();
+            $customResponse = $annotation->getResponseEntity();
+            if ($customResponse !== null) {
+                if (class_exists($customResponse)) {
+                    $responseRef = '#/components/schemas/'.class_basename($customResponse);
+                } else {
+                    $responseRef = '#/components/schemas/'.$customResponse;
+                }
             } else {
                 $responseRef = '#/components/schemas/'.$entity->getResourceName();
             }

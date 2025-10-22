@@ -5,6 +5,7 @@ namespace IsmayilDev\ApiDocKit\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 use IsmayilDev\ApiDocKit\Processors\ApiResourceProcessor;
+use IsmayilDev\ApiDocKit\Processors\DataSchemaProcessor;
 use IsmayilDev\ApiDocKit\Processors\ModelSchemaProcessor;
 use IsmayilDev\ApiDocKit\Processors\ResponseResourceProcessor;
 use OpenApi\Attributes\Server;
@@ -44,8 +45,12 @@ class GenerateDocCommand extends Command
 
         $openApi->withProcessor(
             function (Pipeline $pipeline) use ($insertMatch) {
+                // DataSchemaProcessor: Processes #[DataSchema] attributes on DTOs/data classes
+                $pipeline->insert(app(DataSchemaProcessor::class), $insertMatch);
+                // ResponseResourceProcessor: Processes #[ResponseResource] attributes on API resources
                 $pipeline->insert(app(ResponseResourceProcessor::class), $insertMatch);
                 //                $pipeline->insert(app(ModelSchemaProcessor::class), $insertMatch);
+                // ApiResourceProcessor: Processes #[ApiEndpoint] attributes on controllers
                 $pipeline->insert(app(ApiResourceProcessor::class), $insertMatch);
             }
         );

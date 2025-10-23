@@ -76,6 +76,6 @@ readonly class DocEntity
     {
         $defaultSuffix = config('api-doc-kit.responses.default_response_suffix') ?? 'Dto';
 
-        return $this->name(). $defaultSuffix;
+        return $this->name().$defaultSuffix;
     }
 }

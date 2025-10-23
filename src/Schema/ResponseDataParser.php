@@ -8,14 +8,19 @@ use BackedEnum;
 use Carbon\Carbon;
 use DateTimeInterface;
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use IsmayilDev\ApiDocKit\Attributes\Properties\ArrayOf;
 use IsmayilDev\ApiDocKit\Attributes\Properties\DateTime as DateTimeAttribute;
+use IsmayilDev\ApiDocKit\Attributes\Schema\ArrayProperty;
 use IsmayilDev\ApiDocKit\Attributes\Schema\DataSchema;
 use IsmayilDev\ApiDocKit\Attributes\Schema\DateTimeProperty;
 use IsmayilDev\ApiDocKit\Attributes\Schema\Enum as EnumAttribute;
 use IsmayilDev\ApiDocKit\Enums\OpenApiPropertyType;
+use IsmayilDev\ApiDocKit\Exceptions\InvalidArrayItemTypeException;
 use IsmayilDev\ApiDocKit\Exceptions\MissingEnumAttributeException;
 use IsmayilDev\ApiDocKit\Exceptions\StrictModeException;
+use OpenApi\Attributes\Items;
 use OpenApi\Attributes\Property;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Array_;
@@ -443,6 +448,18 @@ class ResponseDataParser
             );
         }
 
+        // Check if type is array or Collection
+        if ($this->isArrayType($type)) {
+            $arrayInfo = $this->extractArrayInfo($type, $name, $reflectionProperty);
+
+            return new Property(
+                property: $name,
+                type: 'array',
+                items: $arrayInfo['items'],
+                nullable: $nullable,
+            );
+        }
+
         // For non-enum, non-value-object types, use standard type mapping
         $openApiType = $this->mapPhpTypeToOpenApi($type);
         $example = $this->getExampleValue($openApiType);
@@ -694,6 +711,203 @@ class ResponseDataParser
         } catch (\Throwable) {
             // Fallback if Carbon is not available or format is invalid
             return '2024-01-15 14:30:00';
+        }
+    }
+
+    /**
+     * Check if type is array or Collection
+     */
+    protected function isArrayType(ReflectionNamedType|ReflectionUnionType $type): bool
+    {
+        if ($type instanceof ReflectionUnionType) {
+            foreach ($type->getTypes() as $subType) {
+                if ($subType instanceof ReflectionNamedType) {
+                    $typeName = $subType->getName();
+                    if ($typeName === 'array' || $typeName === Collection::class || is_subclass_of($typeName, Collection::class)) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        if ($type instanceof ReflectionNamedType) {
+            $typeName = $type->getName();
+
+            return $typeName === 'array' || $typeName === Collection::class || (class_exists($typeName) && is_subclass_of($typeName, Collection::class));
+        }
+
+        return false;
+    }
+
+    /**
+     * Extract array item type information
+     *
+     * @return array{items: Items}
+     *
+     * @throws InvalidArrayItemTypeException
+     * @throws StrictModeException
+     */
+    protected function extractArrayInfo(
+        ReflectionNamedType|ReflectionUnionType $type,
+        string $propertyName,
+        ?\ReflectionProperty $reflectionProperty
+    ): array {
+        // Resolve item type with priority: property attribute > DataSchema properties > strict mode check
+        $itemTypeInfo = $this->resolveArrayItemType($propertyName, $reflectionProperty);
+
+        return [
+            'items' => $itemTypeInfo['items'],
+        ];
+    }
+
+    /**
+     * Resolve array item type with priority: property attribute > DataSchema properties > strict mode
+     *
+     * @return array{items: Items}
+     *
+     * @throws InvalidArrayItemTypeException
+     * @throws StrictModeException
+     */
+    protected function resolveArrayItemType(string $propertyName, ?\ReflectionProperty $reflectionProperty): array
+    {
+        // Priority 1: Check for #[ArrayOf] attribute on property
+        if ($reflectionProperty !== null) {
+            $attributes = $reflectionProperty->getAttributes(ArrayOf::class);
+            if (! empty($attributes)) {
+                $arrayOfAttr = $attributes[0]->newInstance();
+
+                return $this->createItemsFromType($arrayOfAttr->itemType, $propertyName);
+            }
+        }
+
+        // Priority 2: Check DataSchema properties parameter
+        $dataSchemaItemType = $this->getArrayItemTypeFromDataSchema($propertyName);
+        if ($dataSchemaItemType !== null) {
+            return $this->createItemsFromType($dataSchemaItemType, $propertyName);
+        }
+
+        // Priority 3: Strict mode check
+        $strictMode = $this->isStrictModeEnabled();
+        if ($strictMode) {
+            throw StrictModeException::undefinedArrayItemType($propertyName, class_basename($this->currentClassName ?? 'Unknown'));
+        }
+
+        // Non-strict mode: default to string[] with warning
+        $this->logWarning(
+            "DataSchema: Array property '{$propertyName}' in {$this->currentClassName} has unknown item type, defaulting to 'string[]'. ".
+            'Consider adding #[ArrayOf(...)] attribute or enable strict mode.'
+        );
+
+        return ['items' => new Items(type: 'string')];
+    }
+
+    /**
+     * Get array item type from DataSchema properties parameter
+     */
+    protected function getArrayItemTypeFromDataSchema(string $propertyName): ?string
+    {
+        if ($this->currentClassName === null) {
+            return null;
+        }
+
+        try {
+            $reflection = new ReflectionClass($this->currentClassName);
+            $attributes = $reflection->getAttributes(DataSchema::class);
+
+            if (empty($attributes)) {
+                return null;
+            }
+
+            $dataSchema = $attributes[0]->newInstance();
+            $properties = $dataSchema->getExplicitProperties();
+
+            if ($properties === null) {
+                return null;
+            }
+
+            // Convert camelCase to snake_case for matching
+            $snakeCaseName = strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $propertyName));
+
+            // Find ArrayProperty for this property name
+            foreach ($properties as $property) {
+                if ($property instanceof ArrayProperty) {
+                    if ($property->property === $propertyName || $property->property === $snakeCaseName) {
+                        return $property->itemType;
+                    }
+                }
+            }
+        } catch (\Throwable) {
+            // Silently fail and fall through to default
+        }
+
+        return null;
+    }
+
+    /**
+     * Create Items object from item type (class name or primitive)
+     *
+     * @param  class-string|string  $itemType
+     * @return array{items: Items}
+     *
+     * @throws InvalidArrayItemTypeException
+     */
+    protected function createItemsFromType(string $itemType, string $propertyName): array
+    {
+        // Check if it's a class reference
+        if (class_exists($itemType)) {
+            // Validate that the class has #[DataSchema] attribute
+            $this->validateArrayItemClass($itemType, $propertyName);
+
+            // Return Items with $ref to the schema
+            return [
+                'items' => new Items(
+                    ref: '#/components/schemas/'.class_basename($itemType)
+                ),
+            ];
+        }
+
+        // It's a primitive type - map to OpenAPI type
+        $openApiType = match ($itemType) {
+            'string' => 'string',
+            'int', 'integer' => 'integer',
+            'float', 'double', 'number' => 'number',
+            'bool', 'boolean' => 'boolean',
+            default => 'string',
+        };
+
+        return [
+            'items' => new Items(type: $openApiType),
+        ];
+    }
+
+    /**
+     * Validate that array item class exists and has #[DataSchema] attribute
+     *
+     * @param  class-string  $className
+     *
+     * @throws InvalidArrayItemTypeException
+     */
+    protected function validateArrayItemClass(string $className, string $propertyName): void
+    {
+        try {
+            $reflection = new ReflectionClass($className);
+            $attributes = $reflection->getAttributes(DataSchema::class);
+
+            if (empty($attributes)) {
+                throw InvalidArrayItemTypeException::missingDataSchemaAttribute(
+                    $className,
+                    $this->currentClassName ?? 'Unknown',
+                    $propertyName
+                );
+            }
+        } catch (ReflectionException $e) {
+            throw InvalidArrayItemTypeException::classNotFound(
+                $className,
+                $this->currentClassName ?? 'Unknown',
+                $propertyName
+            );
         }
     }
 

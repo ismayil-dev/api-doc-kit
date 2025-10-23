@@ -410,6 +410,144 @@ UserDto:
       $ref: '#/components/schemas/AddressDto'
 ```
 
+### Handling Arrays and Collections
+
+Arrays and Laravel Collections support customizable item types with three priority levels.
+
+**Priority Resolution:**
+1. **Property-level attribute** (highest priority)
+2. **DataSchema properties parameter**
+3. **Strict mode check / Default behavior** (lowest priority)
+
+#### Option 1: Property-Level Attribute
+
+```php
+use IsmayilDev\ApiDocKit\Attributes\Properties\ArrayOf;
+use Illuminate\Support\Collection;
+
+#[DataSchema]
+class OrderDto implements Arrayable
+{
+    public function __construct(
+        public readonly int $id,
+        #[ArrayOf(OrderItem::class)]  // Array of objects
+        public readonly array $items,
+        #[ArrayOf('string')]  // Array of primitives
+        public readonly array|Collection $tags,
+        #[ArrayOf('integer')]
+        public readonly array $quantities,
+    ) {}
+
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'items' => array_map(fn ($item) => $item->toArray(), $this->items),
+            'tags' => $this->tags instanceof Collection ? $this->tags->toArray() : $this->tags,
+            'quantities' => $this->quantities,
+        ];
+    }
+}
+```
+
+Generated OpenAPI:
+```yaml
+OrderDto:
+  properties:
+    items:
+      type: array
+      items:
+        $ref: '#/components/schemas/OrderItem'
+    tags:
+      type: array
+      items:
+        type: string
+    quantities:
+      type: array
+      items:
+        type: integer
+```
+
+#### Option 2: DataSchema Properties Parameter
+
+```php
+use IsmayilDev\ApiDocKit\Attributes\Schema\ArrayProperty;
+
+#[DataSchema(properties: [
+    new ArrayProperty(property: 'items', itemType: OrderItem::class),
+    new ArrayProperty(property: 'tags', itemType: 'string'),
+])]
+class OrderDto implements Arrayable
+{
+    public function __construct(
+        public readonly array $items,
+        public readonly array $tags,
+    ) {}
+
+    public function toArray(): array
+    {
+        return [
+            'items' => array_map(fn ($item) => $item->toArray(), $this->items),
+            'tags' => $this->tags,
+        ];
+    }
+}
+```
+
+#### Option 3: Strict Mode Behavior
+
+**Strict mode OFF (default):**
+```php
+#[DataSchema]
+class OrderDto implements Arrayable
+{
+    public function __construct(
+        public readonly array $tags,  // No ArrayOf attribute
+    ) {}
+
+    public function toArray(): array
+    {
+        return ['tags' => $this->tags];
+    }
+}
+```
+
+Result: Defaults to `string[]` with warning logged:
+```
+Warning: Array property 'tags' in 'OrderDto' has unknown item type, defaulting to 'string[]'.
+Consider adding #[ArrayOf(...)] attribute.
+```
+
+**Strict mode ON:**
+```php
+// config/api-doc-kit.php
+'schema' => [
+    'strict_mode' => true,
+],
+```
+
+Result: Throws `StrictModeException`:
+```
+Strict mode: Array property 'tags' in OrderDto has unknown item type.
+Add #[ArrayOf(ItemClass::class)] or #[ArrayOf('string')] to specify the array item type.
+```
+
+**Supported Primitive Types:**
+- `'string'` → `items: {type: string}`
+- `'integer'` or `'int'` → `items: {type: integer}`
+- `'number'`, `'float'`, `'double'` → `items: {type: number}`
+- `'boolean'` or `'bool'` → `items: {type: boolean}`
+
+**Object References:**
+- Class must exist and have `#[DataSchema]` attribute
+- Automatically generates `$ref` to the schema
+- Validation throws `InvalidArrayItemTypeException` if class is missing or lacks `#[DataSchema]`
+
+**Collection Support:**
+- `array|Collection` types are treated identically
+- Both generate `type: array` in OpenAPI (Collections serialize to arrays in JSON)
+- Union types like `array|Collection|null` are supported
+
 ## Strict Mode
 
 Enable strict mode for production environments to ensure accurate documentation:
@@ -460,6 +598,7 @@ class OrderDto implements Arrayable { ... }
 7. **Use `#[DateTime]` for dates** - Specify format expectations explicitly for API consumers
 8. **Mark enums with `#[Enum]`** - Enables automatic `$ref` generation and better SDK support
 9. **Use value objects** - Encapsulate validation logic and mark with `#[DataSchema]` for reusability
+10. **Always specify array item types** - Use `#[ArrayOf(...)]` to document what's inside arrays and collections
 
 ## Why Not Auto-Detect from Models?
 

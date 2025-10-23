@@ -20,4 +20,13 @@ class StrictModeException extends RuntimeException
             'Alternatively, disable strict mode in config/api-doc-kit.php.'
         );
     }
+
+    public static function undefinedArrayItemType(string $propertyName, string $className): self
+    {
+        return new self(
+            "Strict mode: Array property '{$propertyName}' in {$className} has unknown item type. ".
+            "Add #[ArrayOf(ItemClass::class)] or #[ArrayOf('string')] to specify the array item type. ".
+            'Alternatively, disable strict mode in config/api-doc-kit.php.'
+        );
+    }
 }

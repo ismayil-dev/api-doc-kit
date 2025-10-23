@@ -24,7 +24,6 @@ return [
             'collection' => null,    // Override for CollectionResponse
             'paginated' => null,     // Override for PaginatedResponse
             'created' => null,       // Override for CreatedResponse
-            'updated' => null,       // Override for UpdatedResponse
             'empty' => null,         // Override for EmptyResponse
         ],
 
@@ -93,6 +92,8 @@ return [
                 // Response::HTTP_INTERNAL_SERVER_ERROR => 'Custom server error description',
             ],
         ],
+
+        'default_response_suffix' => null,
     ],
 
     'headers' => [
@@ -122,5 +123,20 @@ return [
          * Recommended: Enable strict mode in production to ensure accurate documentation
          */
         'strict_mode' => false,
+
+        /**
+         * Date/Time format settings
+         *
+         * Define default formats for Carbon/DateTime properties in DataSchema classes
+         * These can be overridden at the class level or property level using DateTime attributes
+         *
+         * Formats should use PHP date format characters (e.g., Y-m-d, H:i:s)
+         * See: https://www.php.net/manual/en/datetime.format.php
+         */
+        'date_formats' => [
+            'date' => 'Y-m-d',           // Date only (e.g., 2024-01-15)
+            'time' => 'H:i:s',           // Time only (e.g., 14:30:00)
+            'datetime' => 'Y-m-d H:i:s', // Date and time (e.g., 2024-01-15 14:30:00)
+        ],
     ],
 ];

@@ -57,17 +57,34 @@ use OpenApi\Attributes\Schema;
  *     }
  * }
  * ```
+ *
+ * With DateTime Property Overrides:
+ * ```php
+ * #[DataSchema(
+ *     properties: [
+ *         new DateTimeProperty(property: 'createdAt', type: 'datetime'),
+ *         new DateTimeProperty(property: 'birthDate', format: 'Y-m-d'),
+ *     ]
+ * )]
+ * class UserDto
+ * {
+ *     public function __construct(
+ *         public readonly Carbon $createdAt,
+ *         public readonly Carbon $birthDate,
+ *     ) {}
+ * }
+ * ```
  */
 #[Attribute(Attribute::TARGET_CLASS)]
 class DataSchema extends Schema
 {
     /**
-     * @var array<\OpenApi\Attributes\Property>|null Internal storage for explicit property definitions
+     * @var array<\OpenApi\Attributes\Property|\IsmayilDev\ApiDocKit\Attributes\Schema\DateTimeProperty>|null Internal storage for explicit property definitions
      */
     private ?array $_explicitProperties = null;
 
     /**
-     * @param  array<\OpenApi\Attributes\Property>|null  $properties  Explicit property definitions for computed fields
+     * @param  array<\OpenApi\Attributes\Property|\IsmayilDev\ApiDocKit\Attributes\Schema\DateTimeProperty>|null  $properties  Explicit property definitions for computed fields or DateTime overrides
      */
     public function __construct(
         ?string $title = null,
@@ -85,7 +102,7 @@ class DataSchema extends Schema
     /**
      * Get explicit property definitions
      *
-     * @return array<\OpenApi\Attributes\Property>|null
+     * @return array<\OpenApi\Attributes\Property|\IsmayilDev\ApiDocKit\Attributes\Schema\DateTimeProperty>|null
      */
     public function getExplicitProperties(): ?array
     {

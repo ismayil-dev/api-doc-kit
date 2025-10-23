@@ -74,6 +74,8 @@ readonly class DocEntity
 
     public function getResourceName(): string
     {
-        return $this->name().'Resource';
+        $defaultSuffix = config('api-doc-kit.responses.default_response_suffix') ?? 'Dto';
+
+        return $this->name(). $defaultSuffix;
     }
 }

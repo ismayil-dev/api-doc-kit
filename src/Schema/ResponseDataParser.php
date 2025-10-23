@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace IsmayilDev\ApiDocKit\Schema;
 
 use BackedEnum;
+use Carbon\Carbon;
 use DateTimeInterface;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Facades\Log;
+use IsmayilDev\ApiDocKit\Attributes\Properties\DateTime as DateTimeAttribute;
 use IsmayilDev\ApiDocKit\Attributes\Schema\DataSchema;
+use IsmayilDev\ApiDocKit\Attributes\Schema\DateTimeProperty;
 use IsmayilDev\ApiDocKit\Attributes\Schema\Enum as EnumAttribute;
 use IsmayilDev\ApiDocKit\Enums\OpenApiPropertyType;
 use IsmayilDev\ApiDocKit\Exceptions\MissingEnumAttributeException;
@@ -111,10 +114,14 @@ class ResponseDataParser
                 continue;
             }
 
+            // Get the property for attribute checking
+            $reflectionProperty = $reflection->hasProperty($name) ? $reflection->getProperty($name) : null;
+
             $properties[$name] = $this->buildProperty(
                 name: $name,
                 type: $type,
                 nullable: $parameter->allowsNull(),
+                reflectionProperty: $reflectionProperty,
             );
         }
 
@@ -297,8 +304,12 @@ class ResponseDataParser
             }
 
             // Priority 2: Constructor property (auto-detected, reliable type)
-            if (isset($constructorProps[$name])) {
-                $merged[] = $constructorProps[$name];
+            // Try exact match first, then try camelCase conversion (for snake_case toArray keys)
+            $constructorProp = $constructorProps[$name] ?? $this->findConstructorPropertyByName($name, $constructorProps);
+            if ($constructorProp !== null) {
+                // Update the property name to match toArray's field name
+                $constructorProp->property = $name;
+                $merged[] = $constructorProp;
 
                 continue;
             }
@@ -322,6 +333,19 @@ class ResponseDataParser
         }
 
         return array_values($merged);
+    }
+
+    /**
+     * Find constructor property by converting toArray field name to camelCase
+     *
+     * @param  array<string, Property>  $constructorProps
+     */
+    protected function findConstructorPropertyByName(string $toArrayFieldName, array $constructorProps): ?Property
+    {
+        // Convert snake_case to camelCase (e.g., birth_date -> birthDate)
+        $camelCase = str_replace('_', '', lcfirst(ucwords($toArrayFieldName, '_')));
+
+        return $constructorProps[$camelCase] ?? null;
     }
 
     /**
@@ -379,6 +403,7 @@ class ResponseDataParser
         string $name,
         ReflectionNamedType|ReflectionUnionType $type,
         bool $nullable = false,
+        ?\ReflectionProperty $reflectionProperty = null,
     ): Property {
         // Check if type is an enum
         $enumClass = $this->extractEnumClass($type);
@@ -405,6 +430,19 @@ class ResponseDataParser
             );
         }
 
+        // Check if type is Carbon/DateTime with custom formatting
+        $dateTimeInfo = $this->extractDateTimeInfo($type, $name, $reflectionProperty);
+        if ($dateTimeInfo !== null) {
+            return new Property(
+                property: $name,
+                type: 'string',
+                format: $dateTimeInfo['openapi_format'],
+                example: $dateTimeInfo['example'],
+                nullable: $nullable,
+                x: ['format' => $dateTimeInfo['php_format']],
+            );
+        }
+
         // For non-enum, non-value-object types, use standard type mapping
         $openApiType = $this->mapPhpTypeToOpenApi($type);
         $example = $this->getExampleValue($openApiType);
@@ -415,6 +453,248 @@ class ResponseDataParser
             example: $example,
             nullable: $nullable,
         );
+    }
+
+    /**
+     * Extract DateTime information if type is Carbon/DateTime with formatting
+     *
+     * @return array{openapi_format: string, php_format: string, example: string}|null
+     */
+    protected function extractDateTimeInfo(
+        ReflectionNamedType|ReflectionUnionType $type,
+        string $propertyName,
+        ?\ReflectionProperty $reflectionProperty
+    ): ?array {
+        // Check if type is DateTimeInterface
+        if (! $this->isDateTimeType($type)) {
+            return null;
+        }
+
+        // Resolve format with priority: property attribute > DataSchema properties > global config
+        $formatConfig = $this->resolveDateTimeFormat($propertyName, $reflectionProperty);
+
+        return [
+            'openapi_format' => $formatConfig['openapi_format'],
+            'php_format' => $formatConfig['php_format'],
+            'example' => $this->generateDateTimeExample($formatConfig['php_format']),
+        ];
+    }
+
+    /**
+     * Check if type is DateTimeInterface (Carbon, DateTime, etc.)
+     */
+    protected function isDateTimeType(ReflectionNamedType|ReflectionUnionType $type): bool
+    {
+        if ($type instanceof ReflectionUnionType) {
+            foreach ($type->getTypes() as $subType) {
+                if ($subType instanceof ReflectionNamedType) {
+                    $typeName = $subType->getName();
+                    if ($typeName !== 'null' && $this->isDateTimeClass($typeName)) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        if ($type instanceof ReflectionNamedType) {
+            return $this->isDateTimeClass($type->getName());
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if a class name is a DateTime class
+     */
+    protected function isDateTimeClass(string $className): bool
+    {
+        if (! class_exists($className) && ! interface_exists($className)) {
+            return false;
+        }
+
+        return is_subclass_of($className, DateTimeInterface::class) || $className === DateTimeInterface::class;
+    }
+
+    /**
+     * Resolve DateTime format with priority: property attribute > DataSchema properties > global config
+     *
+     * @return array{openapi_format: string, php_format: string, type: string}
+     */
+    protected function resolveDateTimeFormat(string $propertyName, ?\ReflectionProperty $reflectionProperty): array
+    {
+        // Priority 1: Check for #[DateTime] attribute on property
+        if ($reflectionProperty !== null) {
+            $attributes = $reflectionProperty->getAttributes(DateTimeAttribute::class);
+            if (! empty($attributes)) {
+                $dateTimeAttr = $attributes[0]->newInstance();
+
+                return $this->resolveFormatFromAttribute($dateTimeAttr->type, $dateTimeAttr->format);
+            }
+        }
+
+        // Priority 2: Check DataSchema properties parameter
+        $dataSchemaFormat = $this->getDateTimeFormatFromDataSchema($propertyName);
+        if ($dataSchemaFormat !== null) {
+            return $dataSchemaFormat;
+        }
+
+        // Priority 3: Use global config default (datetime)
+        return $this->resolveFormatFromAttribute('datetime', null);
+    }
+
+    /**
+     * Get DateTime format from DataSchema properties parameter
+     *
+     * @return array{openapi_format: string, php_format: string, type: string}|null
+     */
+    protected function getDateTimeFormatFromDataSchema(string $propertyName): ?array
+    {
+        if ($this->currentClassName === null) {
+            return null;
+        }
+
+        try {
+            $reflection = new ReflectionClass($this->currentClassName);
+            $attributes = $reflection->getAttributes(DataSchema::class);
+
+            if (empty($attributes)) {
+                return null;
+            }
+
+            $dataSchema = $attributes[0]->newInstance();
+            $properties = $dataSchema->getExplicitProperties();
+
+            if ($properties === null) {
+                return null;
+            }
+
+            // Convert camelCase to snake_case for matching
+            $snakeCaseName = strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $propertyName));
+
+            // Find DateTimeProperty for this property name (try both exact match and snake_case)
+            foreach ($properties as $property) {
+                if ($property instanceof DateTimeProperty) {
+                    if ($property->property === $propertyName || $property->property === $snakeCaseName) {
+                        return $this->resolveFormatFromAttribute($property->type, $property->format);
+                    }
+                }
+            }
+        } catch (\Throwable) {
+            // Silently fail and fall through to default
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve format from type and format parameters
+     *
+     * @return array{openapi_format: string, php_format: string, type: string}
+     */
+    protected function resolveFormatFromAttribute(?string $type, ?string $format): array
+    {
+        // If format is explicitly provided, use it (and infer OpenAPI format from it)
+        if ($format !== null) {
+            $openApiFormat = $this->inferOpenApiFormatFromPhpFormat($format);
+
+            return [
+                'openapi_format' => $openApiFormat,
+                'php_format' => $format,
+                'type' => $type ?? 'datetime',
+            ];
+        }
+
+        // If type is provided, get format from config
+        if ($type !== null) {
+            $phpFormat = $this->getFormatFromConfig($type);
+
+            return [
+                'openapi_format' => $this->mapTypeToOpenApiFormat($type),
+                'php_format' => $phpFormat,
+                'type' => $type,
+            ];
+        }
+
+        // Default to datetime
+        $phpFormat = $this->getFormatFromConfig('datetime');
+
+        return [
+            'openapi_format' => 'date-time',
+            'php_format' => $phpFormat,
+            'type' => 'datetime',
+        ];
+    }
+
+    /**
+     * Get format string from config
+     */
+    protected function getFormatFromConfig(string $type): string
+    {
+        try {
+            $formats = config('api-doc-kit.schema.date_formats', [
+                'date' => 'Y-m-d',
+                'time' => 'H:i:s',
+                'datetime' => 'Y-m-d H:i:s',
+            ]);
+
+            return $formats[$type] ?? 'Y-m-d H:i:s';
+        } catch (\Throwable) {
+            // Fallback if config is not available
+            return match ($type) {
+                'date' => 'Y-m-d',
+                'time' => 'H:i:s',
+                default => 'Y-m-d H:i:s',
+            };
+        }
+    }
+
+    /**
+     * Map semantic type to OpenAPI format
+     */
+    protected function mapTypeToOpenApiFormat(string $type): string
+    {
+        return match ($type) {
+            'date' => 'date',
+            'time' => 'time',
+            'datetime' => 'date-time',
+            default => 'date-time',
+        };
+    }
+
+    /**
+     * Infer OpenAPI format from PHP date format string
+     */
+    protected function inferOpenApiFormatFromPhpFormat(string $phpFormat): string
+    {
+        // Simple heuristic: if format contains time components, it's date-time
+        if (preg_match('/[HhGgis]/', $phpFormat)) {
+            // Contains time components
+            if (preg_match('/[YymdFMnjlDS]/', $phpFormat)) {
+                // Contains both date and time
+                return 'date-time';
+            }
+
+            // Only time components
+            return 'time';
+        }
+
+        // Only date components
+        return 'date';
+    }
+
+    /**
+     * Generate example value for a DateTime format
+     */
+    protected function generateDateTimeExample(string $phpFormat): string
+    {
+        try {
+            return Carbon::parse('2024-01-15 14:30:00')->format($phpFormat);
+        } catch (\Throwable) {
+            // Fallback if Carbon is not available or format is invalid
+            return '2024-01-15 14:30:00';
+        }
     }
 
     /**

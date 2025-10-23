@@ -101,6 +101,31 @@ return [
     ],
 
     /**
+     * Documentation coverage settings
+     */
+    'documentation' => [
+        /**
+         * Route patterns to exclude from #[ApiEndpoint] validation
+         *
+         * Routes matching these regex patterns will not require #[ApiEndpoint] attribute
+         * even when strict mode is enabled.
+         *
+         * Common exclusions (automatically applied):
+         * - Laravel Debugbar: ^_debugbar
+         * - Laravel Telescope: ^telescope
+         * - Laravel Horizon: ^horizon
+         * - Health checks: ^(up|health)$
+         *
+         * Add your own patterns for internal/admin routes:
+         */
+        'exclude_patterns' => [
+            // '^admin/',      // Admin routes
+            // '^internal/',   // Internal API routes
+            // '^webhook/',    // Webhook handlers (if not documented)
+        ],
+    ],
+
+    /**
      * Schema generation settings
      */
     'schema' => [

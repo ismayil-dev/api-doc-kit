@@ -4,9 +4,11 @@ namespace IsmayilDev\ApiDocKit\Processors;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use IsmayilDev\ApiDocKit\Attributes\Resources\ApiEndpoint;
 use IsmayilDev\ApiDocKit\Attributes\Responses\ApiResponse;
+use IsmayilDev\ApiDocKit\Exceptions\MissingApiEndpointException;
 use IsmayilDev\ApiDocKit\Http\Requests\RequestBodyBuilder;
 use IsmayilDev\ApiDocKit\Http\Responses\Contracts\CollectionResponse;
 use IsmayilDev\ApiDocKit\Http\Responses\Contracts\PaginatedResponse;
@@ -45,6 +47,7 @@ class ApiResourceProcessor
         $annotations = $analysis->annotations;
         $annotationsToDetach = [];
         $annotationsToAttach = [];
+        $processedRoutes = [];
 
         /** @var Operation $annotation */
         foreach ($annotations as $annotation) {
@@ -55,12 +58,14 @@ class ApiResourceProcessor
             $controllerWithNamespace = $this->getClassWithNameSpace($annotation);
             $route = $this->routeMapper->findByController($controllerWithNamespace, $annotation->_context->method);
 
-            // @TODO check controller has a attribute
             if ($route === null) {
                 $annotationsToDetach[] = $annotation;
 
                 continue;
             }
+
+            // Track this route as processed
+            $processedRoutes[] = $route;
 
             $path = "/{$route->path}";
             $description = null;
@@ -132,6 +137,9 @@ class ApiResourceProcessor
         foreach ($annotationsToAttach as $annotation) {
             $annotations->attach($annotation);
         }
+
+        // Validate that all routes have #[ApiEndpoint] attribute
+        $this->validateAllRoutesHaveAttributes($processedRoutes);
     }
 
     protected function guessOperationId(
@@ -356,5 +364,84 @@ class ApiResourceProcessor
         }
 
         return $errorResponses;
+    }
+
+    /**
+     * Validate that all routes have #[ApiEndpoint] attribute
+     *
+     * @param  array<RouteItem>  $processedRoutes
+     */
+    protected function validateAllRoutesHaveAttributes(array $processedRoutes): void
+    {
+        // Get all application routes
+        $allRoutes = $this->routeMapper->getAllRoutes();
+
+        // Find routes that weren't processed (missing #[ApiEndpoint])
+        $missingRoutes = array_filter($allRoutes, function (RouteItem $route) use ($processedRoutes) {
+            // Check if this route was processed
+            foreach ($processedRoutes as $processedRoute) {
+                if ($processedRoute->path === $route->path &&
+                    $processedRoute->method === $route->method &&
+                    $processedRoute->className === $route->className) {
+                    return false; // Route was processed
+                }
+            }
+
+            // Check if route should be excluded
+            if ($this->shouldExcludeRoute($route)) {
+                return false;
+            }
+
+            return true; // Route is missing #[ApiEndpoint]
+        });
+
+        if (empty($missingRoutes)) {
+            return; // All routes are documented
+        }
+
+        $strictMode = config('api-doc-kit.schema.strict_mode', false);
+
+        if ($strictMode) {
+            throw MissingApiEndpointException::forRoutes(array_values($missingRoutes));
+        }
+
+        // Log warnings for each missing route
+        foreach ($missingRoutes as $route) {
+            Log::warning(
+                "Route missing #[ApiEndpoint] attribute: {$route->method} /{$route->path} ({$route->className}@{$route->functionName})"
+            );
+        }
+    }
+
+    /**
+     * Check if route should be excluded from validation
+     */
+    protected function shouldExcludeRoute(RouteItem $route): bool
+    {
+        $path = $route->path;
+
+        // Built-in exclusions
+        $builtInPatterns = [
+            '^_debugbar',      // Laravel Debugbar
+            '^telescope',      // Laravel Telescope
+            '^horizon',        // Laravel Horizon
+            '^(up|health)$',   // Health checks
+        ];
+
+        foreach ($builtInPatterns as $pattern) {
+            if (preg_match("/{$pattern}/", $path)) {
+                return true;
+            }
+        }
+
+        // User-configured exclusions
+        $userPatterns = config('api-doc-kit.documentation.exclude_patterns', []);
+        foreach ($userPatterns as $pattern) {
+            if (preg_match("/{$pattern}/", $path)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

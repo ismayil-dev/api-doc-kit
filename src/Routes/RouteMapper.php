@@ -50,6 +50,16 @@ class RouteMapper
         });
     }
 
+    /**
+     * Get all mapped routes
+     *
+     * @return array<RouteItemEntity>
+     */
+    public function getAllRoutes(): array
+    {
+        return $this->routes->toArray();
+    }
+
     protected function resolveControllerWithFunction(LaravelRoute $route): array
     {
         $action = $route->getActionName();

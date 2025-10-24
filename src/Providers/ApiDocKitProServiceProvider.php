@@ -21,6 +21,30 @@ class ApiDocKitProServiceProvider extends ServiceProvider
                 __DIR__.'/../../config/api-doc-kit.php' => config_path('api-doc-kit.php'),
             ], 'api-doc-kit-config');
         }
+
+        // Example: Customize OpenAPI servers
+        // Developers can override this in their AppServiceProvider
+        //
+        // $this->app->bind('api-doc-kit.servers', function () {
+        //     return [
+        //         new \OpenApi\Attributes\Server(
+        //             url: config('app.url'),
+        //             description: 'Production API'
+        //         ),
+        //         new \OpenApi\Attributes\Server(
+        //             url: 'https://staging.example.com',
+        //             description: 'Staging',
+        //             variables: [
+        //                 new \OpenApi\Attributes\ServerVariable(
+        //                     serverVariable: 'version',
+        //                     default: 'v1',
+        //                     enum: ['v1', 'v2'],
+        //                     description: 'API Version'
+        //                 ),
+        //             ]
+        //         ),
+        //     ];
+        // });
     }
 
     public function register()

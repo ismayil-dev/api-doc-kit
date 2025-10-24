@@ -9,7 +9,6 @@ use IsmayilDev\ApiDocKit\Processors\DataSchemaProcessor;
 use IsmayilDev\ApiDocKit\Processors\EnumSchemaProcessor;
 use IsmayilDev\ApiDocKit\Processors\ResponseResourceProcessor;
 use OpenApi\Attributes\Server;
-use OpenApi\Attributes\ServerVariable;
 use OpenApi\Generator;
 use OpenApi\Pipeline;
 use OpenApi\Processors\BuildPaths;
@@ -26,14 +25,6 @@ class GenerateDocCommand extends Command
         $this->info('Generating OpenAPI documentation...');
 
         $openApi = new Generator;
-        $servers = [new Server(
-            url: 'https://localhost',
-            description: 'Localhost',
-            variables: [
-                new ServerVariable('email', 'Your email', 'me@ismayil.dev'),
-                new ServerVariable('password', 'Your password', 'password'),
-            ]
-        )];
         $insertAfterExpandEnums = function (array $pipes) {
             foreach ($pipes as $ii => $pipe) {
                 if ($pipe instanceof ExpandEnums) {
@@ -70,10 +61,49 @@ class GenerateDocCommand extends Command
         );
 
         $doc = $openApi->generate([app_path()]);
-        $doc->servers = $servers;
+        $doc->servers = $this->getServers();
 
         Storage::put('documentation/openapi.yaml', $doc->toYaml());
 
         $this->info('Documentation generated successfully!');
+    }
+
+    /**
+     * Get configured servers from service container or use defaults
+     *
+     * @return array<Server>
+     */
+    private function getServers(): array
+    {
+        if ($this->laravel->bound('api-doc-kit.servers')) {
+            return $this->laravel->make('api-doc-kit.servers');
+        }
+
+        return $this->getDefaultServers();
+    }
+
+    /**
+     * Get default servers based on APP_URL and environment
+     *
+     * @return array<Server>
+     */
+    private function getDefaultServers(): array
+    {
+        $url = config('app.url') ?? 'http://localhost';
+        $environment = config('app.env', 'local');
+
+        $description = match ($environment) {
+            'production' => 'Production',
+            'staging' => 'Staging',
+            'local' => 'Local Development',
+            default => ucfirst($environment),
+        };
+
+        return [
+            new Server(
+                url: $url,
+                description: $description
+            ),
+        ];
     }
 }

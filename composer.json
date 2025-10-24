@@ -63,7 +63,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "IsmayilDev\\ApiDocKit\\Providers\\ApiDocKitProServiceProvider"
+                "IsmayilDev\\ApiDocKit\\Providers\\ApiDocKitServiceProvider"
             ]
         }
     }

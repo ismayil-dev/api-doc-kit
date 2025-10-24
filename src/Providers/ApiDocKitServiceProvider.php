@@ -6,7 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use IsmayilDev\ApiDocKit\Console\Commands\GenerateDocCommand;
 use IsmayilDev\ApiDocKit\Console\Commands\ScanModelsCommand;
 
-class ApiDocKitProServiceProvider extends ServiceProvider
+class ApiDocKitServiceProvider extends ServiceProvider
 {
     public function boot()
     {

@@ -10,6 +10,7 @@ use IsmayilDev\ApiDocKit\Enums\OpenApiPropertyType;
 use IsmayilDev\ApiDocKit\Exceptions\StrictModeException;
 use IsmayilDev\ApiDocKit\Schema\ResponseDataParser;
 use OpenApi\Analysis;
+use OpenApi\Attributes\Property;
 use OpenApi\Attributes\Schema;
 use OpenApi\Generator;
 use ReflectionException;
@@ -21,7 +22,7 @@ use ReflectionException;
 readonly class DataSchemaProcessor
 {
     public function __construct(
-        private readonly ResponseDataParser $parser
+        private ResponseDataParser $parser
     ) {}
 
     /**
@@ -89,7 +90,7 @@ readonly class DataSchemaProcessor
     /**
      * Extract required fields from properties
      *
-     * @param  array<\OpenApi\Attributes\Property>  $properties
+     * @param  array<Property>  $properties
      * @return array<string>
      */
     protected function extractRequiredFields(array $properties): array

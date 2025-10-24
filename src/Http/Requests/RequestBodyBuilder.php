@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 use IsmayilDev\ApiDocKit\Enums\OpenApiPropertyType;
+use OpenApi\Attributes\Items;
 use OpenApi\Attributes\MediaType;
 use OpenApi\Attributes\Property;
 use OpenApi\Attributes\RequestBody;
@@ -119,22 +120,35 @@ class RequestBodyBuilder
         $parameters = [];
 
         foreach ($attributes as $key => $rule) {
+            // Skip nested array rules (e.g., 'tags.*') as they are processed separately
+            if (str_contains($key, '.*')) {
+                continue;
+            }
+
             $rule = $this->prepareRules($rule);
 
-            $parameters[] = $this->buildParameters($key, $rule);
+            $parameters[] = $this->buildParameters($key, $rule, $attributes);
         }
 
         return $parameters;
     }
 
-    private function buildParameters(string $name, array $rules): Property
+    private function buildParameters(string $name, array $rules, array $allRules): Property
     {
         $type = $this->getPrimitiveType($rules);
+        $items = null;
+
+        // If type is array, detect the array item type
+        if ($type === OpenApiPropertyType::ARRAY) {
+            $itemType = $this->detectArrayItemType($name, $allRules);
+            $items = new Items(type: $itemType->value);
+        }
 
         return new Property(
             property: $name,
             description: 'The '.Str::title($name),
             type: $type->value,
+            items: $items,
             example: "<$type->value>",
             nullable: ! empty($rules['nullable']),
         );
@@ -204,5 +218,28 @@ class RequestBodyBuilder
         }
 
         return array_filter($rules, 'is_string');
+    }
+
+    /**
+     * Detect array item type from nested validation rules
+     *
+     * Looks for rules like 'tags.*' => 'string' to determine array element type
+     *
+     * @param  string  $fieldName  The field name (e.g., 'tags')
+     * @param  array  $allRules  All validation rules
+     */
+    private function detectArrayItemType(string $fieldName, array $allRules): OpenApiPropertyType
+    {
+        // Look for nested array rules like 'tags.*'
+        $nestedKey = $fieldName.'.*';
+
+        if (! isset($allRules[$nestedKey])) {
+            // No nested rule found, default to string
+            return OpenApiPropertyType::STRING;
+        }
+
+        $nestedRules = $this->prepareRules($allRules[$nestedKey]);
+
+        return $this->getPrimitiveType($nestedRules);
     }
 }

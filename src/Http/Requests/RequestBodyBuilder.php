@@ -7,6 +7,7 @@ namespace IsmayilDev\ApiDocKit\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Enum as EnumRule;
 use InvalidArgumentException;
 use IsmayilDev\ApiDocKit\Enums\OpenApiPropertyType;
 use OpenApi\Attributes\Items;
@@ -125,16 +126,29 @@ class RequestBodyBuilder
                 continue;
             }
 
-            $rule = $this->prepareRules($rule);
+            // Detect enum BEFORE prepareRules() to preserve the rule object
+            $enumClass = $this->detectEnumClass($rule);
 
-            $parameters[] = $this->buildParameters($key, $rule, $attributes);
+            $preparedRules = $this->prepareRules($rule);
+
+            $parameters[] = $this->buildParameters($key, $preparedRules, $attributes, $enumClass);
         }
 
         return $parameters;
     }
 
-    private function buildParameters(string $name, array $rules, array $allRules): Property
+    private function buildParameters(string $name, array $rules, array $allRules, ?string $enumClass = null): Property
     {
+        // If enum is detected, use $ref to the enum schema
+        if ($enumClass !== null) {
+            return new Property(
+                property: $name,
+                ref: '#/components/schemas/'.class_basename($enumClass),
+                description: 'The '.Str::title($name),
+                nullable: ! empty($rules['nullable']),
+            );
+        }
+
         $type = $this->getPrimitiveType($rules);
         $items = null;
 
@@ -241,5 +255,36 @@ class RequestBodyBuilder
         $nestedRules = $this->prepareRules($allRules[$nestedKey]);
 
         return $this->getPrimitiveType($nestedRules);
+    }
+
+    /**
+     * Detect enum class from Laravel Rule::enum() objects
+     *
+     * Looks for Illuminate\Validation\Rules\Enum instances in rules array
+     * and extracts the enum class name using reflection
+     *
+     * @param  string|array  $rules  The validation rules
+     * @return string|null The enum class name, or null if no enum rule found
+     */
+    private function detectEnumClass(string|array $rules): ?string
+    {
+        // Convert string rules to array
+        if (is_string($rules)) {
+            return null; // String rules can't contain enum objects
+        }
+
+        // Look for EnumRule instances
+        foreach ($rules as $rule) {
+            if ($rule instanceof EnumRule) {
+                // Use reflection to access the protected $type property
+                $reflection = new \ReflectionClass($rule);
+                $typeProperty = $reflection->getProperty('type');
+                $typeProperty->setAccessible(true);
+
+                return $typeProperty->getValue($rule);
+            }
+        }
+
+        return null;
     }
 }

@@ -41,4 +41,14 @@ trait ResourceTrait
     {
         return $this->errorResponseSchemas ?? null;
     }
+
+    public function getKeyType(): ?string
+    {
+        return $this->keyType ?? null;
+    }
+
+    public function getExampleId(): string|int|null
+    {
+        return $this->exampleId ?? null;
+    }
 }

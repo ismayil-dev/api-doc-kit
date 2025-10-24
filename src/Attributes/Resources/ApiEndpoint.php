@@ -23,6 +23,8 @@ class ApiEndpoint extends Operation
         private readonly ?ErrorResponses $errorResponses = null,
         private readonly MediaType|string|null $successResponseSchema = null,
         private readonly ?array $errorResponseSchemas = null,
+        private readonly ?string $keyType = null,
+        private readonly string|int|null $exampleId = null,
         ?string $path = null,
         ?string $summary = null,
         ?string $description = null,

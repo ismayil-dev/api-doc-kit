@@ -70,7 +70,11 @@ class ApiResourceProcessor
             $path = "/{$route->path}";
             $description = null;
             $operationId = null;
-            $entity = $this->entityResolver->resolve($annotation->getEntity());
+            $entity = $this->entityResolver->resolve(
+                entity: $annotation->getEntity(),
+                keyType: $annotation->getKeyType(),
+                exampleId: $annotation->getExampleId()
+            );
             $responseType = $this->detectResponseType($controllerWithNamespace, $route);
             $this->usePluralEntity = $this->isCollectionEntity($responseType);
 

@@ -8,9 +8,15 @@ use Illuminate\Support\Str;
 
 readonly class DocEntity
 {
+    private bool $isModel;
+
     public function __construct(
-        protected string $entity
-    ) {}
+        protected string $entity,
+        protected ?string $keyType = null,
+        protected string|int|null $exampleId = null,
+    ) {
+        $this->isModel = class_exists($this->entity);
+    }
 
     public function name(): string
     {
@@ -20,6 +26,11 @@ readonly class DocEntity
     public function getPluralName(): string
     {
         return Str::plural($this->name());
+    }
+
+    public function getSingularName(): string
+    {
+        return Str::singular($this->name());
     }
 
     public function description(string $prefix, bool $isPlural = false): string
@@ -50,22 +61,53 @@ readonly class DocEntity
 
     public function exampleId(): string|int
     {
-        return ModelExampleIdGenerator::model($this->instance())->generate();
+        // Return custom example ID if provided
+        if ($this->exampleId !== null) {
+            return $this->exampleId;
+        }
+
+        // For model classes, use ModelExampleIdGenerator
+        if ($this->isModel) {
+            return ModelExampleIdGenerator::model($this->instance())->generate();
+        }
+
+        // For static strings, generate example ID from entity name
+        return Str::lower($this->name()).'-id';
     }
 
-    public function keyType()
+    public function keyType(): string
     {
-        return $this->instance()->getKeyType();
+        // Return custom key type if provided
+        if ($this->keyType !== null) {
+            return $this->keyType;
+        }
+
+        // For model classes, get key type from model instance
+        if ($this->isModel) {
+            return $this->instance()->getKeyType();
+        }
+
+        // For static strings, default to 'int'
+        return 'int';
     }
 
+    /**
+     * Get model instance (only for model classes)
+     *
+     * @throws \RuntimeException if entity is not a model class
+     */
     private function instance()
     {
+        if (! $this->isModel) {
+            throw new \RuntimeException("Cannot instantiate static string entity '{$this->entity}'");
+        }
+
         return new $this->entity;
     }
 
     private function getEntity(): string
     {
-        if (class_exists($this->entity)) {
+        if ($this->isModel) {
             return class_basename($this->entity);
         }
 
@@ -76,6 +118,6 @@ readonly class DocEntity
     {
         $defaultSuffix = config('api-doc-kit.responses.default_response_suffix') ?? 'Dto';
 
-        return $this->name().$defaultSuffix;
+        return $this->getSingularName().$defaultSuffix;
     }
 }

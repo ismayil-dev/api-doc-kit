@@ -23,15 +23,18 @@ readonly class EntityResolver
     }
 
     /**
-     * @param  string<class-string>  $modelClass
+     * Resolve entity from model class or static string
+     *
+     * @param  string  $entity  Model class (e.g., User::class) or static string (e.g., 'Product')
+     * @param  string|null  $keyType  Optional key type override for static strings (default: 'int')
+     * @param  string|int|null  $exampleId  Optional example ID override
      */
-    public function resolve(string $modelClass): DocEntity
+    public function resolve(string $entity, ?string $keyType = null, string|int|null $exampleId = null): DocEntity
     {
-        // @TODO Remove this condition when we have a better way to handle with static strings in attributes
-        if (! class_exists($modelClass)) {
-            throw new RuntimeException("Model {$modelClass} not found");
-        }
-
-        return new DocEntity($modelClass);
+        return new DocEntity(
+            entity: $entity,
+            keyType: $keyType,
+            exampleId: $exampleId
+        );
     }
 }

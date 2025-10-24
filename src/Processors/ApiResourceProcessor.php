@@ -59,6 +59,12 @@ class ApiResourceProcessor
             $route = $this->routeMapper->findByController($controllerWithNamespace, $annotation->_context->method);
 
             if ($route === null) {
+                // Route not found - could be filtered out by route filtering config
+                // or doesn't have a matching Laravel route registered
+                Log::debug(
+                    "Route not found for #[ApiEndpoint] on {$controllerWithNamespace}@{$annotation->_context->method}. ".
+                    'This could be due to route filtering settings or missing route registration.'
+                );
                 $annotationsToDetach[] = $annotation;
 
                 continue;

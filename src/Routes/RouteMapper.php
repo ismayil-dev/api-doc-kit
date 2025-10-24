@@ -21,7 +21,7 @@ class RouteMapper
     {
         $this->routes = collect(Route::getRoutes()->getRoutes())
             ->filter(function (LaravelRoute $route) {
-                return str_starts_with($route->getControllerClass(), 'App\\');
+                return $this->shouldIncludeRoute($route);
             })->map(function (LaravelRoute $route) {
                 [$controller, $functionName] = $this->resolveControllerWithFunction($route);
                 $symfonyRoute = $route->toSymfonyRoute();
@@ -41,6 +41,99 @@ class RouteMapper
                 );
             })
             ->values();
+    }
+
+    /**
+     * Three-layer filtering system to determine if a route should be included
+     *
+     * Layer 1: Route file filtering (only include routes from specified files)
+     * Layer 2: Path pattern exclusion (exclude routes matching regex patterns)
+     * Layer 3: Controller-less route skipping (skip closure routes)
+     */
+    protected function shouldIncludeRoute(LaravelRoute $route): bool
+    {
+        // Layer 1: Route file filtering
+        if (! $this->isFromAllowedRouteFile($route)) {
+            return false;
+        }
+
+        // Layer 2: Path pattern exclusion
+        if ($this->matchesExclusionPattern($route)) {
+            return false;
+        }
+
+        // Layer 3: Controller-less route skipping
+        if ($this->shouldSkipControllerLess($route)) {
+            return false;
+        }
+
+        // Legacy filter: Only include App\\ controllers
+        return str_starts_with($route->getControllerClass(), 'App\\');
+    }
+
+    /**
+     * Layer 1: Check if route is from an allowed route file
+     */
+    protected function isFromAllowedRouteFile(LaravelRoute $route): bool
+    {
+        $allowedFiles = config('api-doc-kit.routes.files', ['api.php']);
+
+        // Get the route action to check the file
+        $action = $route->getAction();
+
+        // If no file information is available, allow the route (backward compatibility)
+        if (! isset($action['file'])) {
+            return true;
+        }
+
+        // Check if the route file matches any allowed file
+        foreach ($allowedFiles as $allowedFile) {
+            if (str_ends_with($action['file'], $allowedFile)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Layer 2: Check if route path matches any exclusion pattern
+     */
+    protected function matchesExclusionPattern(LaravelRoute $route): bool
+    {
+        $excludePatterns = config('api-doc-kit.routes.exclude_paths', []);
+
+        if (empty($excludePatterns)) {
+            return false;
+        }
+
+        $path = $route->uri();
+
+        foreach ($excludePatterns as $pattern) {
+            if (preg_match('/'.$pattern.'/', $path)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Layer 3: Check if controller-less routes should be skipped
+     */
+    protected function shouldSkipControllerLess(LaravelRoute $route): bool
+    {
+        $skipControllerLess = config('api-doc-kit.routes.skip_controller_less', true);
+
+        if (! $skipControllerLess) {
+            return false;
+        }
+
+        // Check if route has a controller
+        $controllerClass = $route->getControllerClass();
+
+        // If getControllerClass() returns null or empty string, it's a controller-less route
+        return empty($controllerClass);
     }
 
     public function findByController(string $controller, string $functionName): ?RouteItemEntity

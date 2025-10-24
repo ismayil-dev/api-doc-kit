@@ -9,6 +9,56 @@ return [
 
     'routes' => [
         'parameter_overrides' => [],
+
+        /**
+         * Route file filtering
+         *
+         * Define which route files to scan for API documentation
+         * By default, only 'api.php' is scanned
+         *
+         * Examples:
+         * - ['api.php'] - Only API routes (default)
+         * - ['api.php', 'web.php'] - Both API and web routes
+         * - ['api.php', 'api-v2.php'] - Multiple API versions
+         */
+        'files' => ['api.php'],
+
+        /**
+         * Route path exclusion patterns
+         *
+         * Routes matching these regex patterns will be excluded from documentation
+         * Useful for excluding system routes, admin panels, or internal endpoints
+         *
+         * Common Laravel system routes are excluded by default:
+         * - Sanctum CSRF cookie endpoint
+         * - Ignition debug screens
+         * - Livewire endpoints
+         * - Telescope monitoring
+         * - Horizon queue dashboard
+         * - Laravel Debugbar
+         */
+        'exclude_paths' => [
+            '^sanctum/',
+            '^_ignition/',
+            '^livewire/',
+            '^telescope',
+            '^horizon',
+            '^_debugbar',
+            // Add your own exclusions:
+            // '^admin/',
+            // '^internal/',
+        ],
+
+        /**
+         * Skip routes without controllers
+         *
+         * When enabled, routes that don't have a controller (closure routes, etc.)
+         * will be automatically skipped during documentation generation
+         *
+         * This prevents errors when Laravel's system routes (health checks, etc.)
+         * don't have traditional controllers
+         */
+        'skip_controller_less' => true,
     ],
 
     /**

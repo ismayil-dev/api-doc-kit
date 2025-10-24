@@ -38,7 +38,10 @@
     "autoload-dev": {
         "psr-4": {
             "IsmayilDev\\ApiDocKit\\Tests\\": "tests/",
-            "IsmayilDev\\ApiDocKit\\Tests\\Doubles\\DataClasses\\": "tests/doubles/DataClasses/"
+            "IsmayilDev\\ApiDocKit\\Tests\\Doubles\\Models\\": "tests/doubles/Models/",
+            "IsmayilDev\\ApiDocKit\\Tests\\Doubles\\DataClasses\\": "tests/doubles/DataClasses/",
+            "IsmayilDev\\ApiDocKit\\Tests\\Doubles\\Enums\\": "tests/doubles/Enums/",
+            "IsmayilDev\\ApiDocKit\\Tests\\Doubles\\ValueObjects\\": "tests/doubles/ValueObjects/"
         }
     },
     "scripts": {

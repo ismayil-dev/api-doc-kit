@@ -37,7 +37,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "IsmayilDev\\ApiDocKit\\Tests\\": "tests/"
+            "IsmayilDev\\ApiDocKit\\Tests\\": "tests/",
+            "IsmayilDev\\ApiDocKit\\Tests\\Doubles\\DataClasses\\": "tests/doubles/DataClasses/"
         }
     },
     "scripts": {

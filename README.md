@@ -115,6 +115,7 @@ Features in active development:
 - **AI Integration** - AI-powered documentation differentiation in human-readable and machine-readable formats
 - **Custom Processor Extensibility** - Public API for custom Swagger processors
 - **Middleware Support** - Support for middleware in API routes
+- **Api Versioning** - Support for API versioning
 
 ---
 

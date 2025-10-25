@@ -40,7 +40,7 @@ class ResponseSchemaBuilder
         $configOverride = $this->getConfigSuccessOverride($responseType);
 
         if ($configOverride !== null) {
-            return $this->buildCustomSuccessResponse($responseType, $configOverride);
+            return $this->buildCustomSuccessResponse($responseType, $configOverride, $responseRef);
         }
 
         // Use default implementations

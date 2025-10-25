@@ -12,7 +12,7 @@ class NumberProperty extends Property
     public function __construct(
         string $description,
         ?string $property = null,
-        ?string $example = null,
+        string|float|int|null $example = null,
         ?bool $nullable = false,
         ?string $format = null,
         ?string $default = null

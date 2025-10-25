@@ -33,7 +33,7 @@ class ResponseSchemaBuilder
     ): ?ApiResponse {
         // If custom schema provided via attribute, use it
         if ($customSchema !== null) {
-            return $this->buildCustomSuccessResponse($responseType, $customSchema);
+            return $this->buildCustomSuccessResponse($responseType, $customSchema, $responseRef);
         }
 
         // Check config for global overrides
@@ -111,14 +111,14 @@ class ResponseSchemaBuilder
     /**
      * Build custom success response using provided schema
      */
-    protected function buildCustomSuccessResponse(string $responseType, MediaType|string $customSchema): ApiResponse
+    protected function buildCustomSuccessResponse(string $responseType, MediaType|string $customSchema, string $responseRef): ApiResponse
     {
         $statusCode = $this->getStatusCodeForResponseType($responseType);
         $description = $this->getDescriptionForResponseType($responseType);
 
         // If schema is a class name string, instantiate it
         if (is_string($customSchema) && class_exists($customSchema)) {
-            $customSchema = new $customSchema;
+            $customSchema = new $customSchema($responseRef);
         }
 
         return new ApiResponse(

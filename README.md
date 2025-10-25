@@ -108,11 +108,13 @@ This MVP release includes:
 
 Features in active development:
 
+- **Laravel Resource Support** - Generate schema from Laravel Resource classes and Advanced Eloquent Model Analyse and Support
 - **TypeScript SDK Generation** - Auto-generate TypeScript SDKs with type-safe methods (working in test project, will be added to package)
+- **Support Query Strings** - Support for query strings in request
 - **Advanced SDK Versioning** - Semantic versioning for generated SDKs
+- **AI Integration** - AI-powered documentation differentiation in human-readable and machine-readable formats
 - **Custom Processor Extensibility** - Public API for custom Swagger processors
-- **Enhanced IDE Integration** - Better autocomplete and validation in IDEs
-- **Additional Language SDKs** - PHP, Python, Go SDK generators
+- **Middleware Support** - Support for middleware in API routes
 
 ---
 

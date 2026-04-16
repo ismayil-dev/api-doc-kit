@@ -65,13 +65,29 @@ class ResponseSchemaBuilder
         $schema = $customSchema
             ?? $this->getConfigErrorSchema($statusCode)
             ?? $this->getConfigGlobalErrorSchema()
-            ?? new JsonErrorContent;
+            ?? $this->getDefaultErrorSchemaRef($statusCode);
 
         return new ApiResponse(
             statusCode: $statusCode,
             description: $description,
             content: $schema
         );
+    }
+
+    /**
+     * Get the default $ref for an error schema based on status code.
+     * Uses shared schemas registered by ErrorSchemaProcessor.
+     */
+    protected function getDefaultErrorSchemaRef(int $statusCode): string
+    {
+        $validationName = config('api-doc-kit.responses.error.schema_names.422', 'ValidationErrorSchema');
+        $defaultName = config('api-doc-kit.responses.error.schema_names.default', 'ErrorSchema');
+
+        $schemaName = ($statusCode === Response::HTTP_UNPROCESSABLE_ENTITY)
+            ? $validationName
+            : $defaultName;
+
+        return '#/components/schemas/' . $schemaName;
     }
 
     /**

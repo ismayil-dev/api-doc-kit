@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Storage;
 use IsmayilDev\ApiDocKit\Processors\ApiResourceProcessor;
 use IsmayilDev\ApiDocKit\Processors\DataSchemaProcessor;
 use IsmayilDev\ApiDocKit\Processors\EnumSchemaProcessor;
+use IsmayilDev\ApiDocKit\Processors\ErrorSchemaProcessor;
 use IsmayilDev\ApiDocKit\Processors\ResponseResourceProcessor;
 use OpenApi\Attributes\Server;
 use OpenApi\Generator;
@@ -55,6 +56,8 @@ class GenerateDocCommand extends Command
                 // ResponseResourceProcessor: Processes #[ResponseResource] attributes on API resources
                 $pipeline->insert(app(ResponseResourceProcessor::class), $insertBeforeBuildPaths);
                 //                $pipeline->insert(app(ModelSchemaProcessor::class), $insertBeforeBuildPaths);
+                // ErrorSchemaProcessor: Registers shared error schemas (ErrorSchema, ValidationErrorSchema)
+                $pipeline->insert(app(ErrorSchemaProcessor::class), $insertBeforeBuildPaths);
                 // ApiResourceProcessor: Processes #[ApiEndpoint] attributes on controllers
                 $pipeline->insert(app(ApiResourceProcessor::class), $insertBeforeBuildPaths);
             }

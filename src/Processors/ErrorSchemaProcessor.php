@@ -16,9 +16,11 @@ use OpenApi\Generator;
  * Registers shared error schemas in components/schemas/ so error responses
  * use $ref instead of inlining the same schema on every endpoint.
  *
- * Registers two schemas by default (matching Laravel's error format):
- * - ErrorSchema: {message: string} — for 400, 401, 403, 500
- * - ValidationErrorSchema: {message: string, errors: {field: string[]}} — for 422
+ * Registers two schemas by default:
+ * - ErrorSchema: {statusCode: int, messages: string[], exception?: object}
+ * - ValidationErrorSchema: {statusCode: int, message: string, errors: {field: string[]}, exception?: object}
+ *
+ * The `exception` field is optional — only present in debug/dev environments.
  *
  * Both schema names are configurable via api-doc-kit.responses.error.schema_names
  */
@@ -29,61 +31,81 @@ readonly class ErrorSchemaProcessor
         $defaultName = config('api-doc-kit.responses.error.schema_names.default', 'ErrorSchema');
         $validationName = config('api-doc-kit.responses.error.schema_names.422', 'ValidationErrorSchema');
 
+        $this->ensureComponents($analysis);
         $this->registerErrorSchema($analysis, $defaultName);
         $this->registerValidationErrorSchema($analysis, $validationName);
     }
 
-    private function registerErrorSchema(Analysis $analysis, string $name): void
+    private function ensureComponents(Analysis $analysis): void
     {
-        // Check if already registered (e.g., by user's own #[Schema] attribute)
-        foreach ($analysis->openapi->components->schemas ?? [] as $schema) {
-            if ($schema instanceof Schema && $schema->schema === $name) {
-                return;
-            }
-        }
-
-        $schema = new Schema(
-            schema: $name,
-            title: $name,
-            description: 'Error response',
-            required: ['message'],
-            properties: [
-                new Property(
-                    property: 'message',
-                    type: 'string',
-                    example: 'Error message',
-                ),
-            ],
-            type: 'object',
-        );
-        $schema->_context = new Context(['generated' => true]);
-
         if ($analysis->openapi->components === Generator::UNDEFINED) {
             $analysis->openapi->components = new \OpenApi\Attributes\Components();
         }
         if ($analysis->openapi->components->schemas === Generator::UNDEFINED) {
             $analysis->openapi->components->schemas = [];
         }
+    }
+
+    private function registerErrorSchema(Analysis $analysis, string $name): void
+    {
+        if ($this->schemaExists($analysis, $name)) {
+            return;
+        }
+
+        $schema = new Schema(
+            schema: $name,
+            title: $name,
+            description: 'Error response',
+            required: ['statusCode', 'messages'],
+            properties: [
+                new Property(
+                    property: 'statusCode',
+                    description: 'HTTP status code',
+                    type: 'integer',
+                    example: 400,
+                ),
+                new Property(
+                    property: 'messages',
+                    description: 'Error messages',
+                    type: 'array',
+                    items: new Items(type: 'string'),
+                    example: ['Something went wrong.'],
+                ),
+                new Property(
+                    property: 'exception',
+                    description: 'Exception details (only present in debug/dev environment)',
+                    type: 'object',
+                    nullable: true,
+                ),
+            ],
+            type: 'object',
+        );
+        $schema->_context = new Context(['generated' => true]);
 
         $analysis->openapi->components->schemas[] = $schema;
     }
 
     private function registerValidationErrorSchema(Analysis $analysis, string $name): void
     {
-        foreach ($analysis->openapi->components->schemas ?? [] as $schema) {
-            if ($schema instanceof Schema && $schema->schema === $name) {
-                return;
-            }
+        if ($this->schemaExists($analysis, $name)) {
+            return;
         }
 
         $schema = new Schema(
             schema: $name,
             title: $name,
             description: 'Validation error response',
-            required: ['message', 'errors'],
+            required: ['statusCode', 'message', 'errors'],
             properties: [
                 new Property(
+                    property: 'statusCode',
+                    description: 'HTTP status code',
+                    type: 'integer',
+                    example: 422,
+                ),
+                new Property(
                     property: 'message',
+                    description: 'Summary error message',
                     type: 'string',
                     example: 'The given data was invalid.',
                 ),
@@ -97,11 +119,28 @@ readonly class ErrorSchemaProcessor
                     ),
                     example: ['email' => ['The email field is required.']],
                 ),
+                new Property(
+                    property: 'exception',
+                    description: 'Exception details (only present in debug/dev environment)',
+                    type: 'object',
+                    nullable: true,
+                ),
             ],
             type: 'object',
         );
         $schema->_context = new Context(['generated' => true]);
 
         $analysis->openapi->components->schemas[] = $schema;
+    }
+
+    private function schemaExists(Analysis $analysis, string $name): bool
+    {
+        foreach ($analysis->openapi->components->schemas ?? [] as $schema) {
+            if ($schema instanceof Schema && $schema->schema === $name) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

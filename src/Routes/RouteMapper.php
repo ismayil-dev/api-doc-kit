@@ -110,7 +110,7 @@ class RouteMapper
         $path = $route->uri();
 
         foreach ($excludePatterns as $pattern) {
-            if (preg_match('/'.$pattern.'/', $path)) {
+            if (preg_match('#'.$pattern.'#', $path)) {
                 return true;
             }
         }

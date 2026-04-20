@@ -128,6 +128,21 @@ return [
             ],
 
             /**
+             * Schema names for shared error schemas registered in components/schemas/
+             *
+             * The package registers two shared error schemas by default:
+             * - 'default': Used for all error responses (400, 401, 403, 500, etc.)
+             * - 422: Distinct schema for validation errors with field-level messages
+             *
+             * Override these names if you want different schema names in your OpenAPI spec.
+             * You can also add per-status-code entries to use different schemas.
+             */
+            'schema_names' => [
+                'default' => 'ErrorSchema',
+                422 => 'ValidationErrorSchema',
+            ],
+
+            /**
              * Per-status-code error descriptions
              * Customize the description text for each error response
              * Use Illuminate\Http\Response constants for status codes
@@ -148,6 +163,27 @@ return [
 
     'headers' => [
 
+    ],
+
+    /**
+     * operationId generation settings
+     *
+     * The OpenAPI `operationId` for each endpoint is derived from the controller
+     * class short name (for single-action `__invoke` controllers) or the method
+     * name (for multi-action controllers).
+     *
+     * By default, the entity name is appended to the action name to reduce the
+     * risk of collisions across entities (e.g. action `list` + entity `Accounts`
+     * → `listAccounts`). For consumers that name controllers in a verb-first
+     * style (e.g. `ListAccountsController`), this appending produces ugly IDs
+     * like `listAccountsAccounts`.
+     *
+     * Set `append_entity` to `false` to skip the entity suffix entirely. The
+     * operationId then matches the controller short name (minus the `Controller`
+     * suffix), camelCased — e.g. `ListAccountsController` → `listAccounts`.
+     */
+    'operation_id' => [
+        'append_entity' => true,
     ],
 
     /**

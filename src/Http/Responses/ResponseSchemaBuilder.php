@@ -7,7 +7,6 @@ namespace IsmayilDev\ApiDocKit\Http\Responses;
 use Illuminate\Http\Response;
 use IsmayilDev\ApiDocKit\Attributes\Responses\ApiResponse;
 use IsmayilDev\ApiDocKit\Attributes\Responses\JsonCollectionContent;
-use IsmayilDev\ApiDocKit\Attributes\Responses\JsonErrorContent;
 use IsmayilDev\ApiDocKit\Attributes\Responses\JsonPaginatedContent;
 use IsmayilDev\ApiDocKit\Http\Responses\Contracts\CollectionResponse;
 use IsmayilDev\ApiDocKit\Http\Responses\Contracts\CreatedResponse;
@@ -65,13 +64,29 @@ class ResponseSchemaBuilder
         $schema = $customSchema
             ?? $this->getConfigErrorSchema($statusCode)
             ?? $this->getConfigGlobalErrorSchema()
-            ?? new JsonErrorContent;
+            ?? $this->getDefaultErrorSchemaRef($statusCode);
 
         return new ApiResponse(
             statusCode: $statusCode,
             description: $description,
             content: $schema
         );
+    }
+
+    /**
+     * Get the default $ref for an error schema based on status code.
+     * Uses shared schemas registered by ErrorSchemaProcessor.
+     */
+    protected function getDefaultErrorSchemaRef(int $statusCode): string
+    {
+        $validationName = config('api-doc-kit.responses.error.schema_names.422', 'ValidationErrorSchema');
+        $defaultName = config('api-doc-kit.responses.error.schema_names.default', 'ErrorSchema');
+
+        $schemaName = ($statusCode === Response::HTTP_UNPROCESSABLE_ENTITY)
+            ? $validationName
+            : $defaultName;
+
+        return '#/components/schemas/'.$schemaName;
     }
 
     /**

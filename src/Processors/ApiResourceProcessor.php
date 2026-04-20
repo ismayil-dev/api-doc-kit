@@ -158,6 +158,11 @@ class ApiResourceProcessor
         DocEntity $entity
     ): string {
         $actionName = $this->guessActionName($annotation, $route, $entity);
+
+        if (! config('api-doc-kit.operation_id.append_entity', true)) {
+            return Str::camel($actionName);
+        }
+
         $entityName = $this->usePluralEntity ? $entity->getPluralName() : $entity->name();
 
         return Str::camel("{$actionName}{$entityName}");
@@ -179,6 +184,13 @@ class ApiResourceProcessor
                 subject: $controllerName,
                 caseSensitive: false
             );
+        }
+
+        // When `append_entity` is disabled, we assume consumers use verb-first
+        // controller names where the entity (if present) is intentional and should
+        // be preserved in the operationId. Skip the entity-stripping step.
+        if (! config('api-doc-kit.operation_id.append_entity', true)) {
+            return $actionName;
         }
 
         $possibleModelNames = [$model->name(), Str::plural($model->name())];

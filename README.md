@@ -127,6 +127,7 @@ Detailed guides for advanced features:
 - **[Enum Support](docs/ENUM_USAGE.md)** - Proper OpenAPI enum handling for better SDK generation
 - **[Static String Entities](docs/STATIC_STRING_ENTITIES.md)** - Use strings instead of model classes
 - **[Documentation Coverage](docs/DOCUMENTATION_COVERAGE.md)** - Validate all routes are documented
+- **[operationId Generation](docs/OPERATION_ID.md)** - Control how `operationId` is derived from controllers
 
 > More documentation coming soon as features are added!
 

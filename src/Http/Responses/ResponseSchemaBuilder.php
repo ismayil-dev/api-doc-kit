@@ -7,7 +7,6 @@ namespace IsmayilDev\ApiDocKit\Http\Responses;
 use Illuminate\Http\Response;
 use IsmayilDev\ApiDocKit\Attributes\Responses\ApiResponse;
 use IsmayilDev\ApiDocKit\Attributes\Responses\JsonCollectionContent;
-use IsmayilDev\ApiDocKit\Attributes\Responses\JsonErrorContent;
 use IsmayilDev\ApiDocKit\Attributes\Responses\JsonPaginatedContent;
 use IsmayilDev\ApiDocKit\Http\Responses\Contracts\CollectionResponse;
 use IsmayilDev\ApiDocKit\Http\Responses\Contracts\CreatedResponse;
@@ -87,7 +86,7 @@ class ResponseSchemaBuilder
             ? $validationName
             : $defaultName;
 
-        return '#/components/schemas/' . $schemaName;
+        return '#/components/schemas/'.$schemaName;
     }
 
     /**

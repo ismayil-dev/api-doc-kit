@@ -39,7 +39,7 @@ readonly class ErrorSchemaProcessor
     private function ensureComponents(Analysis $analysis): void
     {
         if ($analysis->openapi->components === Generator::UNDEFINED) {
-            $analysis->openapi->components = new \OpenApi\Attributes\Components();
+            $analysis->openapi->components = new \OpenApi\Attributes\Components;
         }
         if ($analysis->openapi->components->schemas === Generator::UNDEFINED) {
             $analysis->openapi->components->schemas = [];

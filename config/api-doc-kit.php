@@ -166,6 +166,27 @@ return [
     ],
 
     /**
+     * operationId generation settings
+     *
+     * The OpenAPI `operationId` for each endpoint is derived from the controller
+     * class short name (for single-action `__invoke` controllers) or the method
+     * name (for multi-action controllers).
+     *
+     * By default, the entity name is appended to the action name to reduce the
+     * risk of collisions across entities (e.g. action `list` + entity `Accounts`
+     * → `listAccounts`). For consumers that name controllers in a verb-first
+     * style (e.g. `ListAccountsController`), this appending produces ugly IDs
+     * like `listAccountsAccounts`.
+     *
+     * Set `append_entity` to `false` to skip the entity suffix entirely. The
+     * operationId then matches the controller short name (minus the `Controller`
+     * suffix), camelCased — e.g. `ListAccountsController` → `listAccounts`.
+     */
+    'operation_id' => [
+        'append_entity' => true,
+    ],
+
+    /**
      * Documentation coverage settings
      */
     'documentation' => [

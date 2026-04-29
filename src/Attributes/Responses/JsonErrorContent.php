@@ -30,11 +30,6 @@ class JsonErrorContent extends MediaType
                         type: OpenApiPropertyType::ARRAY->value,
                         items: new Items(type: 'string'),
                     ),
-                    new Property(
-                        property: 'exception',
-                        description: 'Exception (only visible in debug mode)',
-                        type: OpenApiPropertyType::OBJECT->value
-                    ),
                 ],
             )
         );

@@ -17,10 +17,8 @@ use OpenApi\Generator;
  * use $ref instead of inlining the same schema on every endpoint.
  *
  * Registers two schemas by default:
- * - ErrorSchema: {statusCode: int, messages: string[], exception?: object}
- * - ValidationErrorSchema: {statusCode: int, message: string, errors: {field: string[]}, exception?: object}
- *
- * The `exception` field is optional — only present in debug/dev environments.
+ * - ErrorSchema: {statusCode: int, messages: string[]}
+ * - ValidationErrorSchema: {statusCode: int, message: string, errors: {field: string[]}}
  *
  * Both schema names are configurable via api-doc-kit.responses.error.schema_names
  */
@@ -71,12 +69,6 @@ readonly class ErrorSchemaProcessor
                     items: new Items(type: 'string'),
                     example: ['Something went wrong.'],
                 ),
-                new Property(
-                    property: 'exception',
-                    description: 'Exception details (only present in debug/dev environment)',
-                    type: 'object',
-                    nullable: true,
-                ),
             ],
             type: 'object',
         );
@@ -118,12 +110,6 @@ readonly class ErrorSchemaProcessor
                         items: new Items(type: 'string'),
                     ),
                     example: ['email' => ['The email field is required.']],
-                ),
-                new Property(
-                    property: 'exception',
-                    description: 'Exception details (only present in debug/dev environment)',
-                    type: 'object',
-                    nullable: true,
                 ),
             ],
             type: 'object',

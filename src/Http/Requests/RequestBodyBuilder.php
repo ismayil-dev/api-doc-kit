@@ -86,17 +86,25 @@ class RequestBodyBuilder
 
     private function buildRequestBody(array $attributes): RequestBody
     {
+        $required = $this->prepareRequiredParameters($attributes);
+
+        // OpenAPI 3.0 / JSON Schema Draft 7 forbid an empty `required` array
+        // — it must either be absent or have ≥1 item. When every rule is
+        // `sometimes` (or no rules use `required`), leave the property as
+        // its default Generator::UNDEFINED so swagger-php strips the key.
+        $schema = new Schema(
+            properties: $this->prepareParameter($attributes),
+            type: OpenApiPropertyType::OBJECT->value,
+        );
+
+        if ($required !== []) {
+            $schema->required = $required;
+        }
+
         return new RequestBody(
             request: $this->requestClass,
             description: 'Request body',
-            content: new MediaType(
-                mediaType: 'application/json',
-                schema: new Schema(
-                    required: $this->prepareRequiredParameters($attributes),
-                    properties: $this->prepareParameter($attributes),
-                    type: OpenApiPropertyType::OBJECT->value,
-                )
-            )
+            content: new MediaType(mediaType: 'application/json', schema: $schema),
         );
     }
 

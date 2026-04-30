@@ -65,7 +65,10 @@ readonly class DataSchemaProcessor
                 // Set schema properties
                 $annotation->type = OpenApiPropertyType::OBJECT->value;
                 $annotation->properties = $properties;
-                $annotation->required = $required;
+                // OpenAPI 3.0 / JSON Schema Draft 7 forbid an empty `required`
+                // array — it must either be absent or have ≥1 item. Omit when
+                // a DTO has no fields at all (rare, but possible).
+                $annotation->required = $required === [] ? Generator::UNDEFINED : $required;
             } catch (StrictModeException $e) {
                 // Re-throw with additional context
                 Log::error("Failed to generate schema for {$className}: {$e->getMessage()}");

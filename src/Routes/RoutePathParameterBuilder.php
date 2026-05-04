@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace IsmayilDev\ApiDocKit\Routes;
 
 use Illuminate\Support\Collection;
+use IsmayilDev\ApiDocKit\Attributes\Parameters\Query\ListQueryParameters;
 use IsmayilDev\ApiDocKit\Attributes\Parameters\Routes\RoutePathIntegerParameter;
 use IsmayilDev\ApiDocKit\Attributes\Parameters\Routes\RoutePathStringParameter;
 use IsmayilDev\ApiDocKit\Attributes\Resources\ApiEndpoint;
+use IsmayilDev\ApiDocKit\Contracts\ListQueryParametersContributor;
 use IsmayilDev\ApiDocKit\Enums\OpenApiPropertyType;
 use IsmayilDev\ApiDocKit\Models\DocEntity;
 use ReflectionAttribute;
 use ReflectionClass;
+use RuntimeException;
 
 class RoutePathParameterBuilder
 {
@@ -36,6 +39,11 @@ class RoutePathParameterBuilder
             }
         }
 
+        $contributedParameters = $this->collectContributedParameters($method);
+        if (! empty($contributedParameters)) {
+            $parameters->push(...$contributedParameters);
+        }
+
         $routePathParameters = array_filter($route->parameters, function ($pathParameter) use ($parameters) {
             return is_null($parameters->firstWhere('name', $pathParameter['name']));
         });
@@ -51,6 +59,39 @@ class RoutePathParameterBuilder
         return $parameters->unique(function ($parameter) {
             return $parameter->name;
         })->values();
+    }
+
+    /**
+     * @return list<\OpenApi\Attributes\Parameter>
+     */
+    private function collectContributedParameters(\ReflectionMethod $method): array
+    {
+        $contributorAttributes = $method->getAttributes(ListQueryParameters::class);
+        if ($contributorAttributes === []) {
+            return [];
+        }
+
+        $emitted = [];
+        foreach ($contributorAttributes as $reflectionAttribute) {
+            /** @var ListQueryParameters $instance */
+            $instance = $reflectionAttribute->newInstance();
+
+            if (! is_subclass_of($instance->contributor, ListQueryParametersContributor::class)) {
+                throw new RuntimeException(sprintf(
+                    'ListQueryParameters contributor "%s" must implement %s',
+                    $instance->contributor,
+                    ListQueryParametersContributor::class
+                ));
+            }
+
+            /** @var ListQueryParametersContributor $contributor */
+            $contributor = new $instance->contributor(...$instance->arguments);
+            foreach ($contributor->toOpenApiParameters() as $parameter) {
+                $emitted[] = $parameter;
+            }
+        }
+
+        return $emitted;
     }
 
     private function mapToOpenApiAttribute(Collection $routeParameters): Collection

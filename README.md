@@ -110,7 +110,6 @@ Features in active development:
 
 - **Laravel Resource Support** - Generate schema from Laravel Resource classes and Advanced Eloquent Model Analyse and Support
 - **TypeScript SDK Generation** - Auto-generate TypeScript SDKs with type-safe methods (working in test project, will be added to package)
-- **Support Query Strings** - Support for query strings in request
 - **Advanced SDK Versioning** - Semantic versioning for generated SDKs
 - **AI Integration** - AI-powered documentation differentiation in human-readable and machine-readable formats
 - **Custom Processor Extensibility** - Public API for custom Swagger processors
@@ -128,6 +127,7 @@ Detailed guides for advanced features:
 - **[Static String Entities](docs/STATIC_STRING_ENTITIES.md)** - Use strings instead of model classes
 - **[Documentation Coverage](docs/DOCUMENTATION_COVERAGE.md)** - Validate all routes are documented
 - **[operationId Generation](docs/OPERATION_ID.md)** - Control how `operationId` is derived from controllers
+- **[Query Parameters](docs/QUERY_PARAMETERS.md)** - Typed query, header, and list-query parameter primitives
 
 > More documentation coming soon as features are added!
 

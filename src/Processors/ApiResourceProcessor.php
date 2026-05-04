@@ -130,10 +130,12 @@ class ApiResourceProcessor
                 ]
             );
 
-            if (! empty($route->parameters)) {
-                $newAnnotation->parameters = $this->routeParameterBuilder
-                    ->build($route, $entity)
-                    ->toArray();
+            $builtParameters = $this->routeParameterBuilder
+                ->build($route, $entity)
+                ->toArray();
+
+            if (! empty($builtParameters)) {
+                $newAnnotation->parameters = $builtParameters;
             }
 
             $annotationsToAttach[] = $newAnnotation;

@@ -1,6 +1,8 @@
 <?php
 
-namespace IsmayilDev\ApiDocKit\Attributes\Parameters\Query;
+declare(strict_types=1);
+
+namespace IsmayilDev\ApiDocKit\Attributes\Parameters\Headers;
 
 use Attribute;
 use IsmayilDev\ApiDocKit\Enums\OpenApiPropertyType;
@@ -8,22 +10,24 @@ use OpenApi\Attributes\Parameter;
 use OpenApi\Attributes\Schema;
 use OpenApi\Generator;
 
-#[Attribute(Attribute::TARGET_METHOD | Attribute::TARGET_PROPERTY | Attribute::TARGET_PARAMETER | Attribute::TARGET_CLASS_CONSTANT | Attribute::IS_REPEATABLE)]
-class StringQueryParameter extends Parameter
+#[Attribute(Attribute::TARGET_METHOD | Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
+class UuidHeaderParameter extends Parameter
 {
     public function __construct(
         string $name,
         ?string $description = null,
-        ?string $queryName = null,
         bool $required = false,
-        string $example = Generator::UNDEFINED
+        string $example = Generator::UNDEFINED,
     ) {
         parent::__construct(
             name: $name,
             description: $description ?? $name,
-            in: $queryName ?? 'query',
+            in: 'header',
             required: $required,
-            schema: new Schema(type: OpenApiPropertyType::STRING->value),
+            schema: new Schema(
+                type: OpenApiPropertyType::STRING->value,
+                format: 'uuid',
+            ),
             example: $example,
         );
     }

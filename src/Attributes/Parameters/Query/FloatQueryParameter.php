@@ -32,7 +32,7 @@ class FloatQueryParameter extends Parameter
         parent::__construct(
             name: $name,
             description: $description ?? $name,
-            in: $queryName,
+            in: $queryName ?? 'query',
             required: $required,
             schema: $schema,
             example: $example,

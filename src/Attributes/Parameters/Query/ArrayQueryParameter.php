@@ -52,7 +52,7 @@ class ArrayQueryParameter extends Parameter
         parent::__construct(
             name: $name,
             description: $description ?? $name,
-            in: $queryName,
+            in: $queryName ?? 'query',
             required: $required,
             schema: $schema,
             style: 'form',

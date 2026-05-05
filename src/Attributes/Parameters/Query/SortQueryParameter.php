@@ -11,13 +11,22 @@ use OpenApi\Attributes\Schema;
 use OpenApi\Generator;
 
 /**
- * Documents a `sort` query parameter that accepts a comma-separated list of
- * field names, each optionally prefixed with `-` for descending order.
+ * Documents a `sort` query parameter that accepts ONE token: a field name
+ * optionally prefixed with `-` for descending order.
  *
- * Example URL: `?sort=-createdAt,name`
+ * Example URL: `?sort=-createdAt`
  *
- * The schema's `enum` lists every (field, -field) pair so docs/SDKs know
- * the exact set of accepted tokens; clients still pass them comma-joined.
+ * The schema emits an `enum` listing every (field, -field) pair so:
+ *  - generated SDKs get a typed union (`'createdAt' | '-createdAt' | ...`)
+ *    instead of an opaque `string`.
+ *  - Postman shows a dropdown of allowed values instead of generating
+ *    regex-matching gibberish from a `pattern`.
+ *
+ * Multi-token comma-separated sort (`?sort=-createdAt,name`) is still parsed
+ * by consumers if they choose to support it at runtime, but it is intentionally
+ * NOT documented in the OpenAPI spec — single-token sort covers the vast
+ * majority of real use cases and produces a much better SDK / Postman
+ * experience.
  */
 #[Attribute(Attribute::TARGET_METHOD | Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
 class SortQueryParameter extends Parameter
@@ -38,14 +47,21 @@ class SortQueryParameter extends Parameter
             $tokens[] = '-'.$field;
         }
 
+        // Default the example to the first descending-sort token if the
+        // caller didn't pass one — gives Postman a non-empty placeholder
+        // that's actually meaningful.
+        if ($example === Generator::UNDEFINED && $tokens !== []) {
+            $example = $tokens[1] ?? $tokens[0];
+        }
+
         parent::__construct(
             name: $name,
-            description: $description ?? 'Comma-separated list of sort tokens. Prefix with `-` for descending. Allowed: '.implode(', ', $tokens),
+            description: $description ?? 'Sort token. Prefix the field name with `-` for descending order. Allowed: '.implode(', ', $tokens),
             in: 'query',
             required: $required,
             schema: new Schema(
                 type: OpenApiPropertyType::STRING->value,
-                pattern: '^-?[A-Za-z][A-Za-z0-9_.]*(,-?[A-Za-z][A-Za-z0-9_.]*)*$',
+                enum: $tokens,
             ),
             example: $example,
         );

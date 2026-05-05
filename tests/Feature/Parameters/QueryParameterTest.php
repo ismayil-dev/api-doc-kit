@@ -83,7 +83,7 @@ test('PaginationQueryParameters::make returns page + per_page params', function 
         ->and($params[1]->schema->maximum)->toBe(50);
 });
 
-test('SortQueryParameter emits enum-style description with -prefix variants', function () {
+test('SortQueryParameter emits enum schema with -prefix variants', function () {
     $param = new SortQueryParameter(allowedFields: ['name', 'createdAt']);
 
     expect($param->name)->toBe('sort')
@@ -91,7 +91,16 @@ test('SortQueryParameter emits enum-style description with -prefix variants', fu
         ->and($param->description)->toContain('-name')
         ->and($param->description)->toContain('createdAt')
         ->and($param->description)->toContain('-createdAt')
-        ->and($param->schema->pattern)->toBeString();
+        ->and($param->schema->enum)->toBe(['name', '-name', 'createdAt', '-createdAt'])
+        // Default example is the first descending-sort token so Postman has
+        // a meaningful placeholder rather than randexp-generated gibberish.
+        ->and($param->example)->toBe('-name');
+});
+
+test('SortQueryParameter respects an explicit example argument', function () {
+    $param = new SortQueryParameter(allowedFields: ['name', 'createdAt'], example: 'createdAt');
+
+    expect($param->example)->toBe('createdAt');
 });
 
 test('SearchQueryParameter defaults to "q"', function () {

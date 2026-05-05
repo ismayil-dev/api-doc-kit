@@ -221,8 +221,20 @@ class ApiResourceProcessor
         return "{$annotation->_context->namespace}\\{$annotation->_context->class}";
     }
 
+    /**
+     * Methods that do NOT carry a request body per HTTP semantics (RFC 7231).
+     * For these methods, any typed FormRequest on the controller is for query
+     * parameter / header validation — we must not synthesize a `requestBody`
+     * from its rules, or the generated OpenAPI will mislead SDKs and clients.
+     */
+    private const METHODS_WITHOUT_BODY = ['GET', 'HEAD', 'DELETE', 'OPTIONS', 'TRACE'];
+
     protected function getRequestBody(Operation $annotation, string $controller, RouteItem $route)
     {
+        if (in_array(strtoupper($route->method), self::METHODS_WITHOUT_BODY, true)) {
+            return null;
+        }
+
         $requestBody = null;
         $requestClass = $annotation->getRequestClass() ?? $this->extractRequestClassFromController($controller, $route);
 

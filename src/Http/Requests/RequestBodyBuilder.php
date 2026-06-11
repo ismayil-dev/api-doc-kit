@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Enum as EnumRule;
 use InvalidArgumentException;
+use IsmayilDev\ApiDocKit\Enums\OpenApiPropertyFormat;
 use IsmayilDev\ApiDocKit\Enums\OpenApiPropertyType;
 use OpenApi\Attributes\Items;
 use OpenApi\Attributes\MediaType;
@@ -160,6 +161,21 @@ class RequestBodyBuilder
         $type = $this->getPrimitiveType($rules);
         $items = null;
 
+        // DATE / DATETIME are semantic types, not valid OpenAPI `type` values —
+        // serialize them as `type: string` with the corresponding `format`.
+        if ($type === OpenApiPropertyType::DATE || $type === OpenApiPropertyType::DATETIME) {
+            $isDateTime = $type === OpenApiPropertyType::DATETIME;
+
+            return new Property(
+                property: $name,
+                description: 'The '.Str::title($name),
+                type: OpenApiPropertyType::STRING->value,
+                format: $isDateTime ? OpenApiPropertyFormat::DATE_TIME->value : OpenApiPropertyFormat::DATE->value,
+                example: $isDateTime ? '2025-01-15 13:45:00' : '2025-01-15',
+                nullable: ! empty($rules['nullable']),
+            );
+        }
+
         // If type is array, detect the array item type
         if ($type === OpenApiPropertyType::ARRAY) {
             $itemType = $this->detectArrayItemType($name, $allRules);
@@ -181,6 +197,13 @@ class RequestBodyBuilder
      */
     private function getPrimitiveType(array $rules): OpenApiPropertyType
     {
+        foreach ($rules as $rule) {
+            if (str_starts_with($rule, 'date_format:')
+                && $this->formatHasTimeComponent(substr($rule, strlen('date_format:')))) {
+                return OpenApiPropertyType::DATETIME;
+            }
+        }
+
         $typeMap = $this->typeMap();
 
         foreach ($typeMap as $type => $ruleSet) {
@@ -227,10 +250,16 @@ class RequestBodyBuilder
             OpenApiPropertyType::DATE->value => [
                 'date', 'date_equals', 'date_format', 'before', 'before_or_equal', 'after', 'after_or_equal',
             ],
-            OpenApiPropertyType::DATETIME->value => [
-                'date', 'date_format', 'before', 'before_or_equal', 'after', 'after_or_equal',
-            ],
         ];
+    }
+
+    /**
+     * A `date_format` whose PHP format string contains time tokens
+     * (hours/minutes/seconds or a full date-time spec) is a date-time.
+     */
+    private function formatHasTimeComponent(string $format): bool
+    {
+        return (bool) preg_match('/(?<!\\\\)[aAgGhHisuvUcr]/', $format);
     }
 
     private function prepareRules(string|array $rules): array
